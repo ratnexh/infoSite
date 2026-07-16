@@ -65,11 +65,26 @@ export default function SettingsPage() {
   const [twoFACode, setTwoFACode] = useState('');
   const [is2FAVerified, setIs2FAVerified] = useState(false);
 
-  // 3. Mock Connected Devices state
+  // 3. Active Session Device location fetch
+  const [deviceLocation, setDeviceLocation] = useState('Detecting location...');
+
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.city && data.country_name) {
+          setDeviceLocation(`${data.city}, ${data.country_name}`);
+        } else {
+          setDeviceLocation('Localhost');
+        }
+      })
+      .catch(() => {
+        setDeviceLocation('Localhost');
+      });
+  }, []);
+
   const mockDevices = [
-    { name: 'Windows Desktop PC', location: 'New York, USA', status: 'Active Session', active: true, icon: Laptop, time: 'Now' },
-    { name: 'Apple iPhone 15 Pro', location: 'London, UK', status: 'Last synced', active: false, icon: Smartphone, time: '2 hours ago' },
-    { name: 'iPad OS Tablet', location: 'Paris, FR', status: 'Last synced', active: false, icon: Laptop, time: '3 days ago' },
+    { name: 'Windows Desktop PC', location: deviceLocation, status: 'Active Session', active: true, icon: Laptop, time: 'Now' },
   ];
 
   // 4. Auto-lock expanded settings
@@ -297,7 +312,7 @@ export default function SettingsPage() {
         <div className="border-b md:border-b-0 md:border-r border-zinc-900 pb-4 md:pb-0 md:pr-4 flex flex-col justify-between">
           <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Vault Security Score</span>
           <div className="flex items-end gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-zinc-150">{securityScore}%</span>
+            <span className="text-3xl font-extrabold text-zinc-100">{securityScore}%</span>
             <span className={cn(
               "text-[9px] font-bold px-2 py-0.5 rounded border uppercase mb-1 leading-none",
               securityScore === 100 ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/15" :
@@ -565,7 +580,7 @@ export default function SettingsPage() {
                       />
                       <button
                         type="submit"
-                        className="bg-zinc-150 hover:bg-white text-zinc-950 font-bold py-2 px-4 rounded-lg text-xs cursor-pointer transition shadow active:scale-[0.98]"
+                        className="bg-zinc-100 hover:bg-white text-zinc-950 font-bold py-2 px-4 rounded-lg text-xs cursor-pointer transition shadow active:scale-[0.98]"
                       >
                         Verify & Enable
                       </button>
@@ -925,7 +940,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center gap-2 border-b border-zinc-800 pb-3">
                 <Trash2 className="w-5 h-5 text-red-500" />
-                <h4 className="text-sm font-bold text-zinc-150 uppercase tracking-wide">Danger: Hard Reset Vault</h4>
+                <h4 className="text-sm font-bold text-zinc-100 uppercase tracking-wide">Danger: Hard Reset Vault</h4>
               </div>
               
               <p className="text-xs text-zinc-400 leading-relaxed">
@@ -977,7 +992,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center gap-2 border-b border-zinc-800 pb-3">
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                <h4 className="text-sm font-bold text-zinc-150 uppercase tracking-wide">Emergency Recovery Codes</h4>
+                <h4 className="text-sm font-bold text-zinc-100 uppercase tracking-wide">Emergency Recovery Codes</h4>
               </div>
               
               <p className="text-xs text-zinc-400 leading-relaxed">

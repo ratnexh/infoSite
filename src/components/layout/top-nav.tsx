@@ -118,21 +118,23 @@ export default function TopNav() {
             <ChevronDown className="w-3 h-3 text-zinc-455 dark:text-zinc-500" />
           </button>
 
-          <div className="absolute right-0 top-full mt-1.5 w-40 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition duration-250 flex flex-col p-1.5">
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 text-left text-zinc-655 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-850 p-2 rounded text-xs transition cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Export JSON
-            </button>
-            <button
-              onClick={handleImportClick}
-              className="flex items-center gap-2 text-left text-zinc-655 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-855 p-2 rounded text-xs transition cursor-pointer"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              Import Backup
-            </button>
+          <div className="absolute right-0 top-full pt-1 w-40 opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition duration-200 z-50">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl flex flex-col p-1.5">
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-2 text-left text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/80 p-2 rounded-lg text-xs transition cursor-pointer font-semibold"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export JSON
+              </button>
+              <button
+                onClick={handleImportClick}
+                className="flex items-center gap-2 text-left text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/80 p-2 rounded-lg text-xs transition cursor-pointer font-semibold"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Import Backup
+              </button>
+            </div>
           </div>
         </div>
 

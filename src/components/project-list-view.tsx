@@ -594,7 +594,7 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
                           <Link 
                             href={`/project/${proj.id}`}
                             onClick={() => setActiveProjectId(proj.id)}
-                            className="flex items-center gap-1.5 font-bold text-sm text-zinc-150 hover:text-emerald-400 transition animate-fade-in"
+                            className="flex items-center gap-1.5 font-bold text-sm text-zinc-200 hover:text-emerald-400 transition animate-fade-in"
                           >
                             <Folder className="w-4 h-4 shrink-0" style={{ color: proj.color || '#10b981' }} />
                             <span className="truncate max-w-[130px]">{proj.name}</span>
@@ -696,21 +696,21 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
                               <div className="absolute right-0 bottom-full mb-1.5 z-50 w-36 bg-zinc-950 border border-zinc-850 rounded-xl p-1.5 shadow-2xl flex flex-col gap-0.5">
                                 <button
                                   onClick={(e) => { handleDuplicate(e, proj.id); setActiveDropdownId(null); }}
-                                  className="w-full text-left px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-150 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
+                                  className="w-full text-left px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
                                 >
                                   <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                                   Duplicate
                                 </button>
                                 <button
                                   onClick={(e) => { handleTogglePinned(e, proj.id); setActiveDropdownId(null); }}
-                                  className="w-full text-left px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-150 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
+                                  className="w-full text-left px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
                                 >
                                   <Pin className="w-3.5 h-3.5 text-amber-400" />
                                   {proj.isPinned ? 'Unpin top' : 'Pin to top'}
                                 </button>
                                 <button
                                   onClick={(e) => { handleArchive(e, proj.id, proj.name, proj.status === 'archived'); setActiveDropdownId(null); }}
-                                  className="w-full text-left px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-150 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
+                                  className="w-full text-left px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
                                 >
                                   <Archive className="w-3.5 h-3.5 text-zinc-450" />
                                   {proj.status === 'archived' ? 'Unarchive' : 'Archive'}
@@ -922,21 +922,21 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
                                             <div className="absolute right-0 top-full mt-1.5 z-50 w-36 bg-zinc-950 border border-zinc-850 rounded-xl p-1.5 shadow-2xl flex flex-col gap-0.5 text-left">
                                               <button
                                                 onClick={(e) => { handleDuplicate(e, proj.id); setActiveDropdownId(null); }}
-                                                className="w-full px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-150 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
+                                                className="w-full px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
                                               >
                                                 <Sparkles className="w-3 h-3 text-indigo-400" />
                                                 Duplicate
                                               </button>
                                               <button
                                                 onClick={(e) => { handleTogglePinned(e, proj.id); setActiveDropdownId(null); }}
-                                                className="w-full px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-150 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
+                                                className="w-full px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
                                               >
                                                 <Pin className="w-3 h-3 text-amber-400" />
                                                 {proj.isPinned ? 'Unpin top' : 'Pin to top'}
                                               </button>
                                               <button
                                                 onClick={(e) => { handleArchive(e, proj.id, proj.name, proj.status === 'archived'); setActiveDropdownId(null); }}
-                                                className="w-full px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-150 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
+                                                className="w-full px-2 py-1.5 text-[10px] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 rounded font-semibold transition cursor-pointer flex items-center gap-1.5"
                                               >
                                                 <Archive className="w-3 h-3 text-zinc-450" />
                                                 {proj.status === 'archived' ? 'Unarchive' : 'Archive'}

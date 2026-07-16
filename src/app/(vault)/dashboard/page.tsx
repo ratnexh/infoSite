@@ -470,7 +470,7 @@ export default function DashboardPage() {
                             className="flex items-center gap-2 group/title"
                           >
                             <Folder className="w-5 h-5 shrink-0 transition-transform group-hover/title:scale-105" style={{ color: proj.color || '#10b981' }} />
-                            <span className="font-bold text-sm text-zinc-150 group-hover:text-emerald-400 transition-colors truncate max-w-[160px]">
+                            <span className="font-bold text-sm text-zinc-200 group-hover:text-emerald-400 transition-colors truncate max-w-[160px]">
                               {proj.name}
                             </span>
                           </Link>
