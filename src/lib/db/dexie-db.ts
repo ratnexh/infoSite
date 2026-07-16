@@ -60,3 +60,20 @@ export class SiteVaultDB extends Dexie {
 
 // Instantiate database instance
 export const db = new SiteVaultDB();
+
+// Clear all local database tables
+export async function clearAllTables() {
+  await Promise.all([
+    db.projects.clear(),
+    db.urls.clear(),
+    db.credentials.clear(),
+    db.hosting.clear(),
+    db.databases.clear(),
+    db.services.clear(),
+    db.domains.clear(),
+    db.contacts.clear(),
+    db.attachments.clear(),
+    db.activities.clear(),
+    db.settings.clear()
+  ]);
+}

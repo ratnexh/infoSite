@@ -4,6 +4,9 @@ import React, { useEffect } from 'react';
 import { supabase, hasSupabaseConfigured } from '@/lib/supabase/client';
 import { useSyncStore } from '@/store/sync-store';
 import { SyncEngine, setupDexieSyncHooks } from '@/lib/supabase/sync-engine';
+import { clearAllTables } from '@/lib/db/dexie-db';
+import { useSettingsStore } from '@/store/settings-store';
+import { SettingsRepository } from '@/lib/storage/repositories';
 
 export default function SyncInitializer() {
   const { setAuthenticated, setOnlineStatus } = useSyncStore();
@@ -24,9 +27,16 @@ export default function SyncInitializer() {
 
     if (hasSupabaseConfigured()) {
       // Check current session
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
         if (session?.user) {
           setAuthenticated(true, session.user.email ?? null, session.user.id);
+          // Sync metadata to local Dexie settings on load if not set up
+          const metadata = session.user.user_metadata;
+          if (metadata?.vault_salt && metadata?.vault_verifier) {
+            await SettingsRepository.set('vault_salt', metadata.vault_salt);
+            await SettingsRepository.set('vault_verifier', metadata.vault_verifier);
+            await useSettingsStore.getState().checkSetup();
+          }
           // Trigger initial synchronization on load
           SyncEngine.fullSync();
         } else {
@@ -35,14 +45,29 @@ export default function SyncInitializer() {
       });
 
       // Listen for auth state changes
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (session?.user) {
           setAuthenticated(true, session.user.email ?? null, session.user.id);
+          const metadata = session.user.user_metadata;
+          if (metadata?.vault_salt && metadata?.vault_verifier) {
+            await SettingsRepository.set('vault_salt', metadata.vault_salt);
+            await SettingsRepository.set('vault_verifier', metadata.vault_verifier);
+            await useSettingsStore.getState().checkSetup();
+          }
           if (event === 'SIGNED_IN') {
             SyncEngine.fullSync();
           }
         } else {
           setAuthenticated(false, null, null);
+          if (event === 'SIGNED_OUT') {
+            // Clear local cache, lock vault, reset settings store
+            await clearAllTables();
+            useSettingsStore.setState({
+              isSetup: false,
+              isUnlocked: false,
+              encryptionKey: null
+            });
+          }
         }
       });
       authSubscription = subscription;

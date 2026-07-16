@@ -3,10 +3,10 @@
 import React from 'react';
 import { useUIStore } from '@/store/ui-store';
 import { useSettingsStore } from '@/store/settings-store';
-import { 
-  Search, 
-  Lock, 
-  Upload, 
+import {
+  Search,
+  Lock,
+  Upload,
   Download,
   Menu,
   ChevronDown,
@@ -19,13 +19,13 @@ import { useSyncStore } from '@/store/sync-store';
 import { db } from '@/lib/db/dexie-db';
 
 export default function TopNav() {
-  const { 
-    searchTerm, 
-    setSearchTerm, 
+  const {
+    searchTerm,
+    setSearchTerm,
     setCommandPaletteOpen,
     toggleSidebar
   } = useUIStore();
-  
+
   const { lockVault } = useSettingsStore();
   const { isAuthenticated, isSyncing, isOnline } = useSyncStore();
 
@@ -84,7 +84,7 @@ export default function TopNav() {
     <header className="h-14 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-900 flex items-center justify-between px-4 select-none relative z-10 transition-colors duration-200">
       {/* Mobile Sidebar Toggle & Search */}
       <div className="flex items-center gap-3 flex-1 max-w-md">
-        <button 
+        <button
           onClick={toggleSidebar}
           className="lg:hidden text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded cursor-pointer"
         >
@@ -100,7 +100,7 @@ export default function TopNav() {
             placeholder="Global search..."
             className="w-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 rounded-lg pl-9 pr-14 py-1.5 text-zinc-800 dark:text-zinc-100 text-xs placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-700 focus:border-zinc-400 dark:focus:border-zinc-700 transition"
           />
-          <button 
+          <button
             onClick={() => setCommandPaletteOpen(true)}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-500 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-1.5 py-0.5 rounded cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-700 transition"
           >
@@ -117,7 +117,7 @@ export default function TopNav() {
             Backup
             <ChevronDown className="w-3 h-3 text-zinc-455 dark:text-zinc-500" />
           </button>
-          
+
           <div className="absolute right-0 top-full mt-1.5 w-40 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition duration-250 flex flex-col p-1.5">
             <button
               onClick={handleExport}

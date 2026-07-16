@@ -37,8 +37,8 @@ export default function RootLayout({
           forcedTheme="dark"
           disableTransitionOnChange
         >
+          <SyncInitializer />
           <AutoLock>
-            <SyncInitializer />
             {children}
             <CommandPalette />
             <PWARegister />

@@ -9,6 +9,9 @@ import {
   base64ToArrayBuffer
 } from '@/lib/crypto/web-crypto';
 import { db } from '@/lib/db/dexie-db';
+import { supabase } from '@/lib/supabase/client';
+import { useSyncStore } from './sync-store';
+
 
 interface SettingsState {
   isSetup: boolean;
@@ -202,6 +205,21 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           }, newKey);
         }
       });
+
+      // 4.5 If authenticated, update Supabase user password & metadata
+      if (useSyncStore.getState().isAuthenticated) {
+        if (!useSyncStore.getState().isOnline) {
+          throw new Error('You must be online to update your cloud account password');
+        }
+        const { error } = await supabase.auth.updateUser({
+          password: newPassword,
+          data: {
+            vault_salt: newSaltBase64,
+            vault_verifier: newVerifier
+          }
+        });
+        if (error) throw error;
+      }
 
       // 5. Update state
       set({
