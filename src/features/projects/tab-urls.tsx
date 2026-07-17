@@ -18,7 +18,8 @@ import {
   Trash2, 
   Globe, 
   Wrench,
-  GripVertical
+  GripVertical,
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -81,43 +82,6 @@ export default function TabUrls({ project }: { project: Project }) {
 
   const watchedUrl = watch('url');
 
-  // Load modal open state from localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const open = localStorage.getItem(`urls_modal_open_${project.id}`) === 'true';
-      if (open) setModalOpen(true);
-    }
-  }, [project.id]);
-
-  // Save modal open state to localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`urls_modal_open_${project.id}`, modalOpen ? 'true' : 'false');
-    }
-  }, [modalOpen, project.id]);
-
-  // Load editing URL from localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedId = localStorage.getItem(`urls_editing_id_${project.id}`);
-      if (savedId && urls.length > 0) {
-        const found = urls.find(u => u.id === savedId);
-        if (found) setEditingUrl(found);
-      }
-    }
-  }, [urls, project.id]);
-
-  // Save editing URL ID to localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (editingUrl) {
-        localStorage.setItem(`urls_editing_id_${project.id}`, editingUrl.id);
-      } else {
-        localStorage.removeItem(`urls_editing_id_${project.id}`);
-      }
-    }
-  }, [editingUrl, project.id]);
-
   const lastEditingIdRef = React.useRef<string | undefined | null>(undefined);
 
   React.useEffect(() => {
@@ -132,32 +96,17 @@ export default function TabUrls({ project }: { project: Project }) {
           category: 'production'
         };
 
-        if (!currentEditingId) {
-          const saved = localStorage.getItem(`urls_form_draft_${project.id}`);
-          if (saved) {
-            try {
-              initialData = { ...initialData, ...JSON.parse(saved) };
-            } catch {}
-          }
-        } else {
+        if (editingUrl) {
           initialData = {
-            title: editingUrl?.title || '',
-            url: editingUrl?.url || '',
-            category: editingUrl?.category || 'production'
+            title: editingUrl.title || '',
+            url: editingUrl.url || '',
+            category: editingUrl.category || 'production'
           };
         }
         reset(initialData);
       }
     }
   }, [modalOpen, editingUrl, reset, project.id]);
-
-  // Persist form changes in real-time
-  const formValues = watch();
-  React.useEffect(() => {
-    if (modalOpen && !editingUrl && typeof window !== 'undefined') {
-      localStorage.setItem(`urls_form_draft_${project.id}`, JSON.stringify(formValues));
-    }
-  }, [formValues, modalOpen, editingUrl, project.id]);
 
   // Auto-detect title and category from URL
   React.useEffect(() => {
@@ -189,9 +138,6 @@ export default function TabUrls({ project }: { project: Project }) {
         projectId: project.id,
         ...values
       });
-      localStorage.removeItem(`urls_form_draft_${project.id}`);
-      localStorage.removeItem(`urls_editing_id_${project.id}`);
-      localStorage.removeItem(`urls_modal_open_${project.id}`);
       lastEditingIdRef.current = undefined;
       toast.success(editingUrl ? 'URL updated' : 'URL added');
       setModalOpen(false);
@@ -253,8 +199,56 @@ export default function TabUrls({ project }: { project: Project }) {
     setDragOverIndex(null);
   };
 
+  // Detect duplicate URLs
+  const urlCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const u of urls) {
+      const key = u.url?.trim().toLowerCase() || '';
+      if (key) counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
+  }, [urls]);
+  const hasDuplicates = Object.values(urlCounts).some(n => n > 1);
+
+  const handleDeduplicate = async () => {
+    const seen = new Set<string>();
+    const toDelete: string[] = [];
+    for (const u of urls) {
+      const key = u.url?.trim().toLowerCase() || '';
+      if (seen.has(key)) {
+        toDelete.push(u.id);
+      } else {
+        seen.add(key);
+      }
+    }
+    try {
+      await Promise.all(toDelete.map(id => UrlRepository.delete(id, project.id)));
+      toast.success(`Removed ${toDelete.length} duplicate URL${toDelete.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Failed to remove duplicates');
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Duplicate Warning Banner */}
+      {hasDuplicates && currentRole !== 'viewer' && (
+        <div className="flex items-center justify-between gap-3 bg-amber-950/30 border border-amber-500/40 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <p className="text-xs text-amber-300 font-medium">
+              Duplicate URLs detected — only one copy should exist.
+            </p>
+          </div>
+          <button
+            onClick={handleDeduplicate}
+            className="text-xs font-bold text-amber-400 hover:text-amber-300 border border-amber-500/50 hover:border-amber-400 px-3 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap"
+          >
+            Remove Duplicates
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
         <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Associated Project Links</h3>
         <button

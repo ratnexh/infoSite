@@ -53,6 +53,7 @@ export default function TabOverview({ project, onRefresh }: TabOverviewProps) {
     { label: 'Attachments', value: fileCount, icon: Paperclip, color: 'text-blue-400' }
   ];
 
+
   const handleCopy = (text?: string, label = 'Text') => {
     if (!text) return;
     if (currentRole === 'viewer' && label.toLowerCase().includes('password')) {

@@ -512,7 +512,6 @@ export const UrlRepository = {
       () => db.urls.where('projectId').equals(projectId).toArray(),
       db.urls
     );
-    await ActivityRepository.log(projectId, 'update', `Adjusted URL position`);
   },
 
   async swap(idA: string, idB: string, projectId: string): Promise<void> {
@@ -522,7 +521,6 @@ export const UrlRepository = {
       () => db.urls.where('projectId').equals(projectId).toArray(),
       db.urls
     );
-    await ActivityRepository.log(projectId, 'update', `Swapped URL positions`);
   },
 
   async delete(id: string, projectId: string): Promise<void> {
@@ -623,7 +621,6 @@ export const CredentialRepository = {
       () => db.credentials.where('projectId').equals(projectId).toArray(),
       db.credentials
     );
-    await ActivityRepository.log(projectId, 'update', `Adjusted credential position`);
   },
 
   async swap(idA: string, idB: string, projectId: string): Promise<void> {
@@ -633,7 +630,6 @@ export const CredentialRepository = {
       () => db.credentials.where('projectId').equals(projectId).toArray(),
       db.credentials
     );
-    await ActivityRepository.log(projectId, 'update', `Swapped credential positions`);
   },
 
   async delete(id: string, projectId: string): Promise<void> {
@@ -655,7 +651,6 @@ export const HostingRepository = {
     const id = existing?.id || hostingData.id || uuidv4();
     const hosting: Hosting = { ...hostingData, id };
     await db.hosting.put(hosting);
-    await ActivityRepository.log(hostingData.projectId, 'update', `Updated hosting details`);
     return hosting;
   }
 };
@@ -694,7 +689,6 @@ export const DatabaseRepository = {
     };
 
     await db.databases.put(dbRecord);
-    await ActivityRepository.log(dbData.projectId, 'update', `Updated database information`);
     return {
       ...dbRecord,
       password: dbData.password
@@ -726,7 +720,6 @@ export const ServiceRepository = {
     const id = serviceData.id || uuidv4();
     const service: Service = { ...serviceData, id };
     await db.services.put(service);
-    await ActivityRepository.log(serviceData.projectId, 'update', `Updated third-party service: ${service.name}`);
     return service;
   },
 
@@ -737,7 +730,6 @@ export const ServiceRepository = {
       () => db.services.where('projectId').equals(projectId).toArray(),
       db.services
     );
-    await ActivityRepository.log(projectId, 'update', `Adjusted service position`);
   },
 
   async swap(idA: string, idB: string, projectId: string): Promise<void> {
@@ -747,14 +739,10 @@ export const ServiceRepository = {
       () => db.services.where('projectId').equals(projectId).toArray(),
       db.services
     );
-    await ActivityRepository.log(projectId, 'update', `Swapped service positions`);
   },
 
   async delete(id: string, projectId: string): Promise<void> {
-    const service = await db.services.get(id);
-    const name = service?.name || 'Service';
     await db.services.delete(id);
-    await ActivityRepository.log(projectId, 'update', `Removed service config for ${name}`);
   }
 };
 
@@ -769,7 +757,6 @@ export const DomainRepository = {
     const id = existing?.id || domainData.id || uuidv4();
     const domain: DomainInfo = { ...domainData, id };
     await db.domains.put(domain);
-    await ActivityRepository.log(domainData.projectId, 'update', `Updated domain details`);
     return domain;
   }
 };
@@ -785,7 +772,6 @@ export const ContactRepository = {
     const id = contactData.id || uuidv4();
     const contact: Contact = { ...contactData, id };
     await db.contacts.put(contact);
-    await ActivityRepository.log(contactData.projectId, 'update', `Saved contact: ${contact.name} (${contact.role})`);
     return contact;
   },
 
@@ -796,7 +782,6 @@ export const ContactRepository = {
       () => db.contacts.where('projectId').equals(projectId).toArray(),
       db.contacts
     );
-    await ActivityRepository.log(projectId, 'update', `Adjusted contact position`);
   },
 
   async swap(idA: string, idB: string, projectId: string): Promise<void> {
@@ -806,14 +791,11 @@ export const ContactRepository = {
       () => db.contacts.where('projectId').equals(projectId).toArray(),
       db.contacts
     );
-    await ActivityRepository.log(projectId, 'update', `Swapped contact positions`);
   },
 
   async delete(id: string, projectId: string): Promise<void> {
     const contact = await db.contacts.get(id);
-    const name = contact?.name || 'Contact';
     await db.contacts.delete(id);
-    await ActivityRepository.log(projectId, 'update', `Deleted contact: ${name}`);
   }
 };
 

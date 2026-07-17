@@ -33,10 +33,6 @@ import { toast } from 'sonner';
 import TabOverview from '@/features/projects/tab-overview';
 import TabUrls from '@/features/projects/tab-urls';
 import TabCredentials from '@/features/projects/tab-credentials';
-import TabHosting from '@/features/projects/tab-hosting';
-import TabDatabase from '@/features/projects/tab-database';
-import TabServices from '@/features/projects/tab-services';
-import TabContacts from '@/features/projects/tab-contacts';
 import TabNotes from '@/features/projects/tab-notes';
 import TabFiles from '@/features/projects/tab-files';
 import TabActivity from '@/features/projects/tab-activity';
@@ -122,10 +118,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     { id: 'overview', label: 'Overview', icon: Info },
     { id: 'urls', label: 'URLs', icon: Link2 },
     { id: 'credentials', label: 'Credentials', icon: KeyRound },
-    { id: 'hosting', label: 'Hosting', icon: Server },
-    { id: 'database', label: 'Database', icon: DbIcon },
-    { id: 'services', label: 'Services', icon: Puzzle },
-    { id: 'contacts', label: 'Contacts', icon: Users },
     { id: 'notes', label: 'Notes', icon: FileText },
     { id: 'files', label: 'Files', icon: Paperclip },
     { id: 'activity', label: 'Activity', icon: History }
@@ -238,18 +230,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         )}
         {activeProjectTab === 'credentials' && (
           <TabCredentials project={project} />
-        )}
-        {activeProjectTab === 'hosting' && (
-          <TabHosting project={project} />
-        )}
-        {activeProjectTab === 'database' && (
-          <TabDatabase project={project} />
-        )}
-        {activeProjectTab === 'services' && (
-          <TabServices project={project} />
-        )}
-        {activeProjectTab === 'contacts' && (
-          <TabContacts project={project} />
         )}
         {activeProjectTab === 'notes' && (
           <TabNotes project={project} onRefresh={() => {}} />

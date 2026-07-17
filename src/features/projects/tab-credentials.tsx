@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Project, Credential } from '@/types';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db/dexie-db';
-import { CredentialRepository, ActivityRepository } from '@/lib/storage/repositories';
+import { CredentialRepository } from '@/lib/storage/repositories';
 import { useSettingsStore } from '@/store/settings-store';
 import { useConfirmStore } from '@/store/confirm-store';
 import { useForm } from 'react-hook-form';
@@ -25,7 +25,11 @@ import {
   Mail,
   Lock,
   Compass,
-  GripVertical
+  GripVertical,
+  ClipboardList,
+  ShieldCheck,
+  ShieldAlert,
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -57,6 +61,23 @@ function generateSecurePassword(length = 16): string {
     }
   }
   return password;
+}
+
+type StrengthLevel = { label: string; color: string; width: string; score: number };
+
+function getPasswordStrength(password: string): StrengthLevel {
+  if (!password) return { label: '', color: '', width: '0%', score: 0 };
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 14) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (score <= 1) return { label: 'Very Weak', color: 'bg-red-500', width: '15%', score };
+  if (score === 2) return { label: 'Weak', color: 'bg-orange-500', width: '35%', score };
+  if (score === 3) return { label: 'Fair', color: 'bg-yellow-400', width: '60%', score };
+  if (score === 4) return { label: 'Strong', color: 'bg-emerald-400', width: '80%', score };
+  return { label: 'Very Strong', color: 'bg-emerald-500', width: '100%', score };
 }
 
 export default function TabCredentials({ project }: { project: Project }) {
@@ -99,43 +120,6 @@ export default function TabCredentials({ project }: { project: Project }) {
 
   const formPassword = watch('password');
 
-  // Load modal open state from localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const open = localStorage.getItem(`credentials_modal_open_${project.id}`) === 'true';
-      if (open) setModalOpen(true);
-    }
-  }, [project.id]);
-
-  // Save modal open state to localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`credentials_modal_open_${project.id}`, modalOpen ? 'true' : 'false');
-    }
-  }, [modalOpen, project.id]);
-
-  // Load editing credential from localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedId = localStorage.getItem(`credentials_editing_id_${project.id}`);
-      if (savedId && creds.length > 0) {
-        const found = creds.find(c => c.id === savedId);
-        if (found) setEditingCred(found);
-      }
-    }
-  }, [creds, project.id]);
-
-  // Save editing credential ID to localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (editingCred) {
-        localStorage.setItem(`credentials_editing_id_${project.id}`, editingCred.id);
-      } else {
-        localStorage.removeItem(`credentials_editing_id_${project.id}`);
-      }
-    }
-  }, [editingCred, project.id]);
-
   const lastEditingIdRef = React.useRef<string | undefined | null>(undefined);
 
   React.useEffect(() => {
@@ -154,22 +138,15 @@ export default function TabCredentials({ project }: { project: Project }) {
           notes: ''
         };
 
-        if (!currentEditingId) {
-          const saved = localStorage.getItem(`credentials_form_draft_${project.id}`);
-          if (saved) {
-            try {
-              initialData = { ...initialData, ...JSON.parse(saved) };
-            } catch {}
-          }
-        } else {
+        if (editingCred) {
           initialData = {
-            title: editingCred?.title || '',
-            username: editingCred?.username || '',
-            email: editingCred?.email || '',
-            password: editingCred?.password || '',
-            apiKey: editingCred?.apiKey || '',
-            secret: editingCred?.secret || '',
-            notes: editingCred?.notes || ''
+            title: editingCred.title || '',
+            username: editingCred.username || '',
+            email: editingCred.email || '',
+            password: editingCred.password || '',
+            apiKey: editingCred.apiKey || '',
+            secret: editingCred.secret || '',
+            notes: editingCred.notes || ''
           };
         }
         reset(initialData);
@@ -177,24 +154,12 @@ export default function TabCredentials({ project }: { project: Project }) {
     }
   }, [modalOpen, editingCred, reset, project.id]);
 
-  // Persist form changes in real-time
-  const formValues = watch();
-  React.useEffect(() => {
-    if (modalOpen && !editingCred && typeof window !== 'undefined') {
-      localStorage.setItem(`credentials_form_draft_${project.id}`, JSON.stringify(formValues));
-    }
-  }, [formValues, modalOpen, editingCred, project.id]);
-
   const toggleVisibility = (key: string) => {
     if (currentRole === 'viewer') {
       toast.error('Viewer role is not authorized to decrypt passwords or API keys');
       return;
     }
     setVisibleFields(prev => ({ ...prev, [key]: !prev[key] }));
-    if (!visibleFields[key]) {
-      const fieldName = key.split('-')[1] || 'credential';
-      ActivityRepository.log(project.id, 'view_credential', `Viewed sensitive field "${fieldName}"`);
-    }
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -205,15 +170,26 @@ export default function TabCredentials({ project }: { project: Project }) {
     }
     navigator.clipboard.writeText(text);
     toast.success(`Copied ${label} to clipboard`);
-    if (label.toLowerCase().includes('password')) {
-      ActivityRepository.log(project.id, 'copy_password', 'Copied credentials password to clipboard');
-    }
   };
 
   const handleGenerateInForm = () => {
     const newPass = generateSecurePassword();
     setValue('password', newPass);
     toast.success('Generated strong password');
+  };
+
+  const handleExportCred = (cred: Credential) => {
+    const lines: string[] = [
+      `=== ${cred.title} ===`,
+      cred.username ? `Username: ${cred.username}` : '',
+      cred.email    ? `Email:    ${cred.email}` : '',
+      cred.password ? `Password: ${cred.password}` : '',
+      cred.apiKey   ? `API Key:  ${cred.apiKey}` : '',
+      cred.secret   ? `Secret:   ${cred.secret}` : '',
+      cred.notes    ? `Notes:    ${cred.notes}` : '',
+    ].filter(Boolean);
+    navigator.clipboard.writeText(lines.join('\n'));
+    toast.success(`"${cred.title}" credentials copied to clipboard`);
   };
 
   const onSubmit = async (values: CredFormValues) => {
@@ -229,9 +205,6 @@ export default function TabCredentials({ project }: { project: Project }) {
         ...values
       }, encryptionKey);
 
-      localStorage.removeItem(`credentials_form_draft_${project.id}`);
-      localStorage.removeItem(`credentials_editing_id_${project.id}`);
-      localStorage.removeItem(`credentials_modal_open_${project.id}`);
       lastEditingIdRef.current = undefined;
       toast.success(editingCred ? 'Credentials saved' : 'Credentials created');
       setModalOpen(false);
@@ -293,8 +266,54 @@ export default function TabCredentials({ project }: { project: Project }) {
     setDragOverIndex(null);
   };
 
+  // Detect duplicate titles
+  const titleCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const c of creds) {
+      counts[c.title] = (counts[c.title] || 0) + 1;
+    }
+    return counts;
+  }, [creds]);
+  const hasDuplicates = Object.values(titleCounts).some(n => n > 1);
+
+  const handleDeduplicateCredentials = async () => {
+    const seen = new Set<string>();
+    const toDelete: string[] = [];
+    for (const c of creds) {
+      if (seen.has(c.title)) {
+        toDelete.push(c.id);
+      } else {
+        seen.add(c.title);
+      }
+    }
+    try {
+      await Promise.all(toDelete.map(id => CredentialRepository.delete(id, project.id)));
+      toast.success(`Removed ${toDelete.length} duplicate credential${toDelete.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Failed to remove duplicates');
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Duplicate Warning Banner */}
+      {hasDuplicates && currentRole !== 'viewer' && (
+        <div className="flex items-center justify-between gap-3 bg-amber-950/30 border border-amber-500/40 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <p className="text-xs text-amber-300 font-medium">
+              Duplicate credentials detected — only one copy should exist.
+            </p>
+          </div>
+          <button
+            onClick={handleDeduplicateCredentials}
+            className="text-xs font-bold text-amber-400 hover:text-amber-300 border border-amber-500/50 hover:border-amber-400 px-3 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap"
+          >
+            Remove Duplicates
+          </button>
+        </div>
+      )}
+
       {/* Tab Header */}
       <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
         <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Access Credentials</h3>
@@ -350,6 +369,13 @@ export default function TabCredentials({ project }: { project: Project }) {
                   </h4>
                   {currentRole !== 'viewer' && (
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleExportCred(cred)}
+                        className="p-1.5 text-zinc-400 hover:text-blue-400 hover:bg-blue-950/20 rounded transition cursor-pointer"
+                        title="Copy all credentials to clipboard"
+                      >
+                        <ClipboardList className="w-3.5 h-3.5" />
+                      </button>
                       <button
                         onClick={() => {
                           setEditingCred(cred);
@@ -581,6 +607,30 @@ export default function TabCredentials({ project }: { project: Project }) {
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-250 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 transition font-mono"
                       placeholder="Enter password or generate"
                     />
+                    {/* Password Strength Meter */}
+                    {formPassword && (() => {
+                      const s = getPasswordStrength(formPassword);
+                      return (
+                        <div className="space-y-1 pt-1">
+                          <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${s.color}`}
+                              style={{ width: s.width }}
+                            />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {s.score >= 4 ? (
+                              <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
+                            ) : (
+                              <ShieldAlert className="w-2.5 h-2.5 text-orange-400" />
+                            )}
+                            <span className={`text-[9px] font-bold uppercase tracking-wider ${
+                              s.score >= 4 ? 'text-emerald-400' : s.score === 3 ? 'text-yellow-400' : 'text-orange-400'
+                            }`}>{s.label}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 

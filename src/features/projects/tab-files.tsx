@@ -14,7 +14,8 @@ import {
   File, 
   Trash2, 
   Download, 
-  Loader2 
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 import { formatBytes, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -126,8 +127,56 @@ export default function TabFiles({ project }: { project: Project }) {
     return <File className="w-5 h-5 text-zinc-400" />;
   };
 
+  // Detect duplicate file names
+  const nameCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const f of filesList) {
+      const key = f.name?.trim().toLowerCase() || '';
+      if (key) counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
+  }, [filesList]);
+  const hasDuplicates = Object.values(nameCounts).some(n => n > 1);
+
+  const handleDeduplicate = async () => {
+    const seen = new Set<string>();
+    const toDelete: string[] = [];
+    for (const f of filesList) {
+      const key = f.name?.trim().toLowerCase() || '';
+      if (seen.has(key)) {
+        toDelete.push(f.id);
+      } else {
+        seen.add(key);
+      }
+    }
+    try {
+      await Promise.all(toDelete.map(id => AttachmentRepository.delete(id, project.id)));
+      toast.success(`Removed ${toDelete.length} duplicate file${toDelete.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Failed to remove duplicates');
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Duplicate Warning Banner */}
+      {hasDuplicates && (
+        <div className="flex items-center justify-between gap-3 bg-amber-950/30 border border-amber-500/40 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <p className="text-xs text-amber-300 font-medium">
+              Duplicate files detected — only one copy should exist.
+            </p>
+          </div>
+          <button
+            onClick={handleDeduplicate}
+            className="text-xs font-bold text-amber-400 hover:text-amber-300 border border-amber-500/50 hover:border-amber-400 px-3 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap"
+          >
+            Remove Duplicates
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
         <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Project Files & Attachments</h3>

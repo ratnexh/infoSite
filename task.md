@@ -1,0 +1,20 @@
+- [x] Add projectDialogOpen state and actions to ui-store.ts
+- [x] Render ProjectDialog in VaultLayout (layout.tsx)
+- [x] Connect Dashboard + New Project action and remove local dialog from dashboard/page.tsx
+- [x] Connect Projects ListView + New Project action and remove local dialog from project-list-view.tsx
+- [x] Make Sidebar navigation z-index (z-45) higher than project creation backdrop (z-40) to keep links interactive
+- [x] Integrate LocalStorage draft states and Dialog state persistence to prevent inputs loss
+- [x] Fix foreign key constraint sync failure by adding a retry loop to database pushes
+- [x] Add inline color index editor to project overview metadata card (tab-overview.tsx)
+- [x] Add Light Mode toggle to top nav and enable light mode support in ThemeProvider
+- [x] Configure Tailwind v4 selector-based dark variant and split CSS variables into light/dark definitions
+- [x] Fix unreadable styling issues (white-on-white text, black inputs/dropdowns, gray banners) in Light Mode
+- [x] Animate the Sun/Moon icons on theme switcher with rotation and slide transitions
+- [x] Fix lock screen container background and border contrasts in Light Mode
+- [x] Resolve loading skeleton block contrast visibility in Light Mode
+- [x] Create ConfirmStore and custom ConfirmDialog component popup interface
+- [x] Replaced all native window.confirm calls with async showConfirm hooks throughout the application
+- [x] Redesigned ConfirmDialog with premium SaaS styling, dynamic variant assets, and layout alignment
+- [x] Aligned Projects and Activity page headers to be non-sticky, relative, transparent headers matching Dashboard and Settings page headers
+- [x] Completely removed Hosting, Database, Services, and Contacts tabs from project detail page and deleted their respective components/files
+- [x] Verify build check compiles cleanly
