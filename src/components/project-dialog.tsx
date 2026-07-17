@@ -105,28 +105,34 @@ export default function ProjectDialog({ isOpen, onClose, onSuccess, editingProje
 
   const isFormValid = projectName?.trim().length > 0;
 
+  const lastEditingIdRef = React.useRef<string | undefined | null>(undefined);
+
   React.useEffect(() => {
     if (isOpen) {
-      reset({
-        name: editingProject?.name || '',
-        aka: editingProject?.aka || '',
-        status: editingProject?.status || 'development',
-        color: editingProject?.color || '#10b981',
-        docsUrls: editingProject?.docsUrls || [],
-        figmaUrls: editingProject?.figmaUrls || [],
-        url2: editingProject?.url2 || '',
-        dashboardUrl2: editingProject?.dashboardUrl2 || '',
-        cred2Username: editingProject?.cred2Username || '',
-        cred2Password: editingProject?.cred2Password || '',
-        url3: editingProject?.url3 || '',
-        dashboardUrl3: editingProject?.dashboardUrl3 || '',
-        cred3Username: editingProject?.cred3Username || '',
-        cred3Password: editingProject?.cred3Password || ''
-      });
-      setDocInput('');
-      setFigmaInput('');
-      setProdExpanded(true);
-      setStagingExpanded(false);
+      const currentEditingId = editingProject?.id || null;
+      if (lastEditingIdRef.current !== currentEditingId) {
+        lastEditingIdRef.current = currentEditingId;
+        reset({
+          name: editingProject?.name || '',
+          aka: editingProject?.aka || '',
+          status: editingProject?.status || 'development',
+          color: editingProject?.color || '#10b981',
+          docsUrls: editingProject?.docsUrls || [],
+          figmaUrls: editingProject?.figmaUrls || [],
+          url2: editingProject?.url2 || '',
+          dashboardUrl2: editingProject?.dashboardUrl2 || '',
+          cred2Username: editingProject?.cred2Username || '',
+          cred2Password: editingProject?.cred2Password || '',
+          url3: editingProject?.url3 || '',
+          dashboardUrl3: editingProject?.dashboardUrl3 || '',
+          cred3Username: editingProject?.cred3Username || '',
+          cred3Password: editingProject?.cred3Password || ''
+        });
+        setDocInput('');
+        setFigmaInput('');
+        setProdExpanded(true);
+        setStagingExpanded(false);
+      }
     }
   }, [isOpen, editingProject, reset]);
 
@@ -179,6 +185,7 @@ export default function ProjectDialog({ isOpen, onClose, onSuccess, editingProje
         await ProjectRepository.create(projectData, encryptionKey);
         toast.success(`Project "${values.name}" created successfully`);
       }
+      lastEditingIdRef.current = undefined;
       onSuccess();
       onClose();
     } catch (e) {
@@ -292,7 +299,7 @@ export default function ProjectDialog({ isOpen, onClose, onSuccess, editingProje
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto scrollbar-thin">
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 overflow-y-auto scrollbar-thin">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

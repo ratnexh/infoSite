@@ -56,7 +56,7 @@ export default function Sidebar() {
   return (
     <aside 
       className={cn(
-        "h-screen bg-zinc-100/50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-900 flex flex-col transition-all duration-300 shrink-0 select-none relative z-20",
+        "h-screen bg-zinc-100/50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-900 flex flex-col transition-all duration-300 shrink-0 select-none relative z-45",
         sidebarOpen ? "w-64" : "w-16"
       )}
     >
