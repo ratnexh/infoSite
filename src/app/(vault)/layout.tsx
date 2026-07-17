@@ -3,8 +3,12 @@
 import React from 'react';
 import Sidebar from '@/components/layout/sidebar';
 import TopNav from '@/components/layout/top-nav';
+import ProjectDialog from '@/components/project-dialog';
+import { useUIStore } from '@/store/ui-store';
 
 export default function VaultLayout({ children }: { children: React.ReactNode }) {
+  const { projectDialogOpen, setProjectDialogOpen } = useUIStore();
+
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
       {/* Sidebar Navigation */}
@@ -22,6 +26,13 @@ export default function VaultLayout({ children }: { children: React.ReactNode })
           </div>
         </main>
       </div>
+
+      {/* Global persistent project creation dialog */}
+      <ProjectDialog 
+        isOpen={projectDialogOpen} 
+        onClose={() => setProjectDialogOpen(false)} 
+        onSuccess={() => {}} 
+      />
     </div>
   );
 }

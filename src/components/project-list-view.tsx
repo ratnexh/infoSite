@@ -35,8 +35,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { formatDate } from '@/lib/utils';
-import ProjectDialog from '@/components/project-dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -63,10 +61,10 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
     setSortBy, 
     sortOrder, 
     toggleSortOrder,
-    setActiveProjectId
+    setActiveProjectId,
+    setProjectDialogOpen
   } = useUIStore();
 
-  const [dialogOpen, setDialogOpen] = useState(false);
   const { currentRole } = useSettingsStore();
 
   // Local Filters
@@ -397,7 +395,7 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
 
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => setDialogOpen(true)}
+            onClick={() => setProjectDialogOpen(true)}
             className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold py-2 px-3.5 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-md transition active:scale-[0.98]"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -1092,11 +1090,6 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
         )}
       </AnimatePresence>
 
-      <ProjectDialog 
-        isOpen={dialogOpen} 
-        onClose={() => setDialogOpen(false)} 
-        onSuccess={() => {}} 
-      />
     </div>
   );
 }

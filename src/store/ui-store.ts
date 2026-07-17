@@ -11,6 +11,7 @@ interface UIState {
   sortOrder: 'asc' | 'desc';
   commandPaletteOpen: boolean;
   activeProjectTab: string;
+  projectDialogOpen: boolean;
   
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
@@ -22,6 +23,7 @@ interface UIState {
   toggleSortOrder: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
   setActiveProjectTab: (tab: string) => void;
+  setProjectDialogOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -34,6 +36,7 @@ export const useUIStore = create<UIState>((set) => ({
   sortOrder: 'desc',
   commandPaletteOpen: false,
   activeProjectTab: 'overview',
+  projectDialogOpen: false,
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -45,4 +48,5 @@ export const useUIStore = create<UIState>((set) => ({
   toggleSortOrder: () => set((state) => ({ sortOrder: state.sortOrder === 'asc' ? 'desc' : 'asc' })),
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
   setActiveProjectTab: (tab) => set({ activeProjectTab: tab }),
+  setProjectDialogOpen: (open) => set({ projectDialogOpen: open }),
 }));

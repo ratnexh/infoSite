@@ -32,14 +32,12 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import ProjectDialog from '@/components/project-dialog';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [envFilter, setEnvFilter] = useState<'all' | 'staging' | 'production'>('all');
   
   const { 
@@ -52,7 +50,8 @@ export default function DashboardPage() {
     statusFilter, 
     setStatusFilter,
     sortBy,
-    setSortBy
+    setSortBy,
+    setProjectDialogOpen
   } = useUIStore();
   
   const { lockVault } = useSettingsStore();
@@ -321,7 +320,7 @@ export default function DashboardPage() {
             onChange={handleRestoreJSON}
           />
           <button
-            onClick={() => setDialogOpen(true)}
+            onClick={() => setProjectDialogOpen(true)}
             className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold py-2 px-3 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-emerald-500/10 transition active:scale-[0.98]"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -824,11 +823,6 @@ export default function DashboardPage() {
 
       </div>
 
-      <ProjectDialog 
-        isOpen={dialogOpen} 
-        onClose={() => setDialogOpen(false)} 
-        onSuccess={() => {}} 
-      />
     </div>
   );
 }
