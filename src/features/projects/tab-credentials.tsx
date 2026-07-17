@@ -97,29 +97,91 @@ export default function TabCredentials({ project }: { project: Project }) {
 
   const formPassword = watch('password');
 
+  // Load modal open state from localStorage
   React.useEffect(() => {
-    if (editingCred) {
-      reset({
-        title: editingCred.title,
-        username: editingCred.username || '',
-        email: editingCred.email || '',
-        password: editingCred.password || '',
-        apiKey: editingCred.apiKey || '',
-        secret: editingCred.secret || '',
-        notes: editingCred.notes || ''
-      });
-    } else {
-      reset({
-        title: '',
-        username: '',
-        email: '',
-        password: '',
-        apiKey: '',
-        secret: '',
-        notes: ''
-      });
+    if (typeof window !== 'undefined') {
+      const open = localStorage.getItem(`credentials_modal_open_${project.id}`) === 'true';
+      if (open) setModalOpen(true);
     }
-  }, [editingCred, reset, modalOpen]);
+  }, [project.id]);
+
+  // Save modal open state to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`credentials_modal_open_${project.id}`, modalOpen ? 'true' : 'false');
+    }
+  }, [modalOpen, project.id]);
+
+  // Load editing credential from localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedId = localStorage.getItem(`credentials_editing_id_${project.id}`);
+      if (savedId && creds.length > 0) {
+        const found = creds.find(c => c.id === savedId);
+        if (found) setEditingCred(found);
+      }
+    }
+  }, [creds, project.id]);
+
+  // Save editing credential ID to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (editingCred) {
+        localStorage.setItem(`credentials_editing_id_${project.id}`, editingCred.id);
+      } else {
+        localStorage.removeItem(`credentials_editing_id_${project.id}`);
+      }
+    }
+  }, [editingCred, project.id]);
+
+  const lastEditingIdRef = React.useRef<string | undefined | null>(undefined);
+
+  React.useEffect(() => {
+    if (modalOpen) {
+      const currentEditingId = editingCred?.id || null;
+      if (lastEditingIdRef.current !== currentEditingId) {
+        lastEditingIdRef.current = currentEditingId;
+        
+        let initialData = {
+          title: '',
+          username: '',
+          email: '',
+          password: '',
+          apiKey: '',
+          secret: '',
+          notes: ''
+        };
+
+        if (!currentEditingId) {
+          const saved = localStorage.getItem(`credentials_form_draft_${project.id}`);
+          if (saved) {
+            try {
+              initialData = { ...initialData, ...JSON.parse(saved) };
+            } catch {}
+          }
+        } else {
+          initialData = {
+            title: editingCred?.title || '',
+            username: editingCred?.username || '',
+            email: editingCred?.email || '',
+            password: editingCred?.password || '',
+            apiKey: editingCred?.apiKey || '',
+            secret: editingCred?.secret || '',
+            notes: editingCred?.notes || ''
+          };
+        }
+        reset(initialData);
+      }
+    }
+  }, [modalOpen, editingCred, reset, project.id]);
+
+  // Persist form changes in real-time
+  const formValues = watch();
+  React.useEffect(() => {
+    if (modalOpen && !editingCred && typeof window !== 'undefined') {
+      localStorage.setItem(`credentials_form_draft_${project.id}`, JSON.stringify(formValues));
+    }
+  }, [formValues, modalOpen, editingCred, project.id]);
 
   const toggleVisibility = (key: string) => {
     if (currentRole === 'viewer') {
@@ -165,6 +227,10 @@ export default function TabCredentials({ project }: { project: Project }) {
         ...values
       }, encryptionKey);
 
+      localStorage.removeItem(`credentials_form_draft_${project.id}`);
+      localStorage.removeItem(`credentials_editing_id_${project.id}`);
+      localStorage.removeItem(`credentials_modal_open_${project.id}`);
+      lastEditingIdRef.current = undefined;
       toast.success(editingCred ? 'Credentials saved' : 'Credentials created');
       setModalOpen(false);
       setEditingCred(null);

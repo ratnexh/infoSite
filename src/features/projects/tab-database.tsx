@@ -41,32 +41,83 @@ export default function TabDatabase({ project }: { project: Project }) {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors }
   } = useForm<DbFormValues>({
     resolver: zodResolver(dbSchema)
   });
 
+  // Load editing state from localStorage
   React.useEffect(() => {
-    if (dbInfo) {
-      reset({
-        type: dbInfo.type || 'PostgreSQL',
-        host: dbInfo.host || '',
-        port: dbInfo.port || '',
-        username: dbInfo.username || '',
-        password: dbInfo.password || '',
-        databaseName: dbInfo.databaseName || ''
-      });
-    } else {
-      reset({
-        type: 'PostgreSQL',
-        host: '',
-        port: '',
-        username: '',
-        password: '',
-        databaseName: ''
-      });
+    if (typeof window !== 'undefined') {
+      const editing = localStorage.getItem(`database_is_editing_${project.id}`) === 'true';
+      if (editing) setIsEditing(true);
     }
-  }, [dbInfo, reset]);
+  }, [project.id]);
+
+  // Save editing state to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`database_is_editing_${project.id}`, isEditing ? 'true' : 'false');
+    }
+  }, [isEditing, project.id]);
+
+  const lastDbInfoIdRef = React.useRef<string | undefined | null>(undefined);
+
+  React.useEffect(() => {
+    if (isEditing) {
+      const currentDbInfoId = dbInfo?.id || null;
+      if (lastDbInfoIdRef.current !== currentDbInfoId) {
+        lastDbInfoIdRef.current = currentDbInfoId;
+        
+        let initialData = {
+          type: 'PostgreSQL',
+          host: '',
+          port: '',
+          username: '',
+          password: '',
+          databaseName: ''
+        };
+
+        const saved = localStorage.getItem(`database_form_draft_${project.id}`);
+        if (saved) {
+          try {
+            initialData = { ...initialData, ...JSON.parse(saved) };
+          } catch {}
+        } else if (dbInfo) {
+          initialData = {
+            type: dbInfo.type || 'PostgreSQL',
+            host: dbInfo.host || '',
+            port: dbInfo.port || '',
+            username: dbInfo.username || '',
+            password: dbInfo.password || '',
+            databaseName: dbInfo.databaseName || ''
+          };
+        }
+        reset(initialData);
+      }
+    } else {
+      lastDbInfoIdRef.current = undefined;
+      if (dbInfo) {
+        reset({
+          type: dbInfo.type || 'PostgreSQL',
+          host: dbInfo.host || '',
+          port: dbInfo.port || '',
+          username: dbInfo.username || '',
+          password: dbInfo.password || '',
+          databaseName: dbInfo.databaseName || ''
+        });
+      }
+    }
+  }, [isEditing, dbInfo, reset, project.id]);
+
+  // Persist form changes in real-time
+  const formValues = watch();
+  React.useEffect(() => {
+    if (isEditing && typeof window !== 'undefined') {
+      localStorage.setItem(`database_form_draft_${project.id}`, JSON.stringify(formValues));
+    }
+  }, [formValues, isEditing, project.id]);
 
   const handleCopy = (text: string, label: string) => {
     if (!text) return;
@@ -86,6 +137,9 @@ export default function TabDatabase({ project }: { project: Project }) {
         ...values
       }, encryptionKey);
       toast.success('Database details saved successfully');
+      localStorage.removeItem(`database_form_draft_${project.id}`);
+      localStorage.removeItem(`database_is_editing_${project.id}`);
+      lastDbInfoIdRef.current = undefined;
       setIsEditing(false);
       setIsPassVisible(false);
     } catch {
@@ -96,6 +150,9 @@ export default function TabDatabase({ project }: { project: Project }) {
   };
 
   const cancelEdit = () => {
+    localStorage.removeItem(`database_form_draft_${project.id}`);
+    localStorage.removeItem(`database_is_editing_${project.id}`);
+    lastDbInfoIdRef.current = undefined;
     setIsEditing(false);
     setIsPassVisible(false);
     if (dbInfo) {

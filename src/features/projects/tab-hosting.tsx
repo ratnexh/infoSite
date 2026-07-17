@@ -34,25 +34,86 @@ export default function TabHosting({ project }: { project: Project }) {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors }
   } = useForm<HostingFormValues>({
     resolver: zodResolver(hostingSchema)
   });
 
-  // Populate form values when DB record loads
+  // Load editing state from localStorage
   React.useEffect(() => {
-    if (dbHosting) {
-      reset({
-        provider: dbHosting.provider || '',
-        ip: dbHosting.ip || '',
-        username: dbHosting.username || '',
-        port: dbHosting.port || '22',
-        cdn: dbHosting.cdn || '',
-        dnsProvider: dbHosting.dnsProvider || '',
-        notes: dbHosting.notes || ''
-      });
+    if (typeof window !== 'undefined') {
+      const editing = localStorage.getItem(`hosting_is_editing_${project.id}`) === 'true';
+      if (editing) setIsEditing(true);
     }
-  }, [dbHosting, reset]);
+  }, [project.id]);
+
+  // Save editing state to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`hosting_is_editing_${project.id}`, isEditing ? 'true' : 'false');
+    }
+  }, [isEditing, project.id]);
+
+  const lastHostingIdRef = React.useRef<string | undefined | null>(undefined);
+
+  React.useEffect(() => {
+    if (isEditing) {
+      const currentHostingId = dbHosting?.id || null;
+      if (lastHostingIdRef.current !== currentHostingId) {
+        lastHostingIdRef.current = currentHostingId;
+        
+        let initialData = {
+          provider: '',
+          ip: '',
+          username: '',
+          port: '22',
+          cdn: '',
+          dnsProvider: '',
+          notes: ''
+        };
+
+        const saved = localStorage.getItem(`hosting_form_draft_${project.id}`);
+        if (saved) {
+          try {
+            initialData = { ...initialData, ...JSON.parse(saved) };
+          } catch {}
+        } else if (dbHosting) {
+          initialData = {
+            provider: dbHosting.provider || '',
+            ip: dbHosting.ip || '',
+            username: dbHosting.username || '',
+            port: dbHosting.port || '22',
+            cdn: dbHosting.cdn || '',
+            dnsProvider: dbHosting.dnsProvider || '',
+            notes: dbHosting.notes || ''
+          };
+        }
+        reset(initialData);
+      }
+    } else {
+      lastHostingIdRef.current = undefined;
+      if (dbHosting) {
+        reset({
+          provider: dbHosting.provider || '',
+          ip: dbHosting.ip || '',
+          username: dbHosting.username || '',
+          port: dbHosting.port || '22',
+          cdn: dbHosting.cdn || '',
+          dnsProvider: dbHosting.dnsProvider || '',
+          notes: dbHosting.notes || ''
+        });
+      }
+    }
+  }, [isEditing, dbHosting, reset, project.id]);
+
+  // Persist form changes in real-time
+  const formValues = watch();
+  React.useEffect(() => {
+    if (isEditing && typeof window !== 'undefined') {
+      localStorage.setItem(`hosting_form_draft_${project.id}`, JSON.stringify(formValues));
+    }
+  }, [formValues, isEditing, project.id]);
 
   const onSubmit = async (values: HostingFormValues) => {
     setIsSubmitting(true);
@@ -62,6 +123,9 @@ export default function TabHosting({ project }: { project: Project }) {
         ...values
       });
       toast.success('Hosting details saved successfully');
+      localStorage.removeItem(`hosting_form_draft_${project.id}`);
+      localStorage.removeItem(`hosting_is_editing_${project.id}`);
+      lastHostingIdRef.current = undefined;
       setIsEditing(false);
     } catch {
       toast.error('Failed to save hosting configurations');
@@ -71,6 +135,9 @@ export default function TabHosting({ project }: { project: Project }) {
   };
 
   const cancelEdit = () => {
+    localStorage.removeItem(`hosting_form_draft_${project.id}`);
+    localStorage.removeItem(`hosting_is_editing_${project.id}`);
+    lastHostingIdRef.current = undefined;
     setIsEditing(false);
     if (dbHosting) {
       reset({

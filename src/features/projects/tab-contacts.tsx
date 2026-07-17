@@ -59,6 +59,7 @@ export default function TabContacts({ project }: { project: Project }) {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors }
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
@@ -71,25 +72,87 @@ export default function TabContacts({ project }: { project: Project }) {
     }
   });
 
+  // Load modal open state from localStorage
   React.useEffect(() => {
-    if (editingContact) {
-      reset({
-        name: editingContact.name,
-        email: editingContact.email || '',
-        phone: editingContact.phone || '',
-        role: editingContact.role,
-        notes: editingContact.notes || ''
-      });
-    } else {
-      reset({
-        name: '',
-        email: '',
-        phone: '',
-        role: 'developer',
-        notes: ''
-      });
+    if (typeof window !== 'undefined') {
+      const open = localStorage.getItem(`contacts_modal_open_${project.id}`) === 'true';
+      if (open) setModalOpen(true);
     }
-  }, [editingContact, reset, modalOpen]);
+  }, [project.id]);
+
+  // Save modal open state to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`contacts_modal_open_${project.id}`, modalOpen ? 'true' : 'false');
+    }
+  }, [modalOpen, project.id]);
+
+  // Load editing contact from localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedId = localStorage.getItem(`contacts_editing_id_${project.id}`);
+      if (savedId && contacts.length > 0) {
+        const found = contacts.find(c => c.id === savedId);
+        if (found) setEditingContact(found);
+      }
+    }
+  }, [contacts, project.id]);
+
+  // Save editing contact ID to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (editingContact) {
+        localStorage.setItem(`contacts_editing_id_${project.id}`, editingContact.id);
+      } else {
+        localStorage.removeItem(`contacts_editing_id_${project.id}`);
+      }
+    }
+  }, [editingContact, project.id]);
+
+  const lastEditingIdRef = React.useRef<string | undefined | null>(undefined);
+
+  React.useEffect(() => {
+    if (modalOpen) {
+      const currentEditingId = editingContact?.id || null;
+      if (lastEditingIdRef.current !== currentEditingId) {
+        lastEditingIdRef.current = currentEditingId;
+        
+        let initialData: ContactFormValues = {
+          name: '',
+          email: '',
+          phone: '',
+          role: 'developer',
+          notes: ''
+        };
+
+        if (!currentEditingId) {
+          const saved = localStorage.getItem(`contacts_form_draft_${project.id}`);
+          if (saved) {
+            try {
+              initialData = { ...initialData, ...JSON.parse(saved) };
+            } catch {}
+          }
+        } else {
+          initialData = {
+            name: editingContact?.name || '',
+            email: editingContact?.email || '',
+            phone: editingContact?.phone || '',
+            role: editingContact?.role || 'developer',
+            notes: editingContact?.notes || ''
+          };
+        }
+        reset(initialData);
+      }
+    }
+  }, [modalOpen, editingContact, reset, project.id]);
+
+  // Persist form changes in real-time
+  const formValues = watch();
+  React.useEffect(() => {
+    if (modalOpen && !editingContact && typeof window !== 'undefined') {
+      localStorage.setItem(`contacts_form_draft_${project.id}`, JSON.stringify(formValues));
+    }
+  }, [formValues, modalOpen, editingContact, project.id]);
 
   const handleCopy = (text: string, label: string) => {
     if (!text) return;
@@ -104,6 +167,10 @@ export default function TabContacts({ project }: { project: Project }) {
         projectId: project.id,
         ...values
       });
+      localStorage.removeItem(`contacts_form_draft_${project.id}`);
+      localStorage.removeItem(`contacts_editing_id_${project.id}`);
+      localStorage.removeItem(`contacts_modal_open_${project.id}`);
+      lastEditingIdRef.current = undefined;
       toast.success(editingContact ? 'Contact details updated' : 'Contact stakeholder added');
       setModalOpen(false);
       setEditingContact(null);

@@ -64,6 +64,7 @@ export default function TabServices({ project }: { project: Project }) {
     handleSubmit,
     setValue,
     reset,
+    watch,
     formState: { errors }
   } = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceSchema),
@@ -75,23 +76,85 @@ export default function TabServices({ project }: { project: Project }) {
     }
   });
 
+  // Load modal open state from localStorage
   React.useEffect(() => {
-    if (editingService) {
-      reset({
-        name: editingService.name,
-        url: editingService.url || '',
-        email: editingService.email || '',
-        notes: editingService.notes || ''
-      });
-    } else {
-      reset({
-        name: 'Stripe',
-        url: '',
-        email: '',
-        notes: ''
-      });
+    if (typeof window !== 'undefined') {
+      const open = localStorage.getItem(`services_modal_open_${project.id}`) === 'true';
+      if (open) setModalOpen(true);
     }
-  }, [editingService, reset, modalOpen]);
+  }, [project.id]);
+
+  // Save modal open state to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`services_modal_open_${project.id}`, modalOpen ? 'true' : 'false');
+    }
+  }, [modalOpen, project.id]);
+
+  // Load editing service from localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedId = localStorage.getItem(`services_editing_id_${project.id}`);
+      if (savedId && services.length > 0) {
+        const found = services.find(s => s.id === savedId);
+        if (found) setEditingService(found);
+      }
+    }
+  }, [services, project.id]);
+
+  // Save editing service ID to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (editingService) {
+        localStorage.setItem(`services_editing_id_${project.id}`, editingService.id);
+      } else {
+        localStorage.removeItem(`services_editing_id_${project.id}`);
+      }
+    }
+  }, [editingService, project.id]);
+
+  const lastEditingIdRef = React.useRef<string | undefined | null>(undefined);
+
+  React.useEffect(() => {
+    if (modalOpen) {
+      const currentEditingId = editingService?.id || null;
+      if (lastEditingIdRef.current !== currentEditingId) {
+        lastEditingIdRef.current = currentEditingId;
+        
+        let initialData = {
+          name: 'Stripe',
+          url: '',
+          email: '',
+          notes: ''
+        };
+
+        if (!currentEditingId) {
+          const saved = localStorage.getItem(`services_form_draft_${project.id}`);
+          if (saved) {
+            try {
+              initialData = { ...initialData, ...JSON.parse(saved) };
+            } catch {}
+          }
+        } else {
+          initialData = {
+            name: editingService?.name || 'Stripe',
+            url: editingService?.url || '',
+            email: editingService?.email || '',
+            notes: editingService?.notes || ''
+          };
+        }
+        reset(initialData);
+      }
+    }
+  }, [modalOpen, editingService, reset, project.id]);
+
+  // Persist form changes in real-time
+  const formValues = watch();
+  React.useEffect(() => {
+    if (modalOpen && !editingService && typeof window !== 'undefined') {
+      localStorage.setItem(`services_form_draft_${project.id}`, JSON.stringify(formValues));
+    }
+  }, [formValues, modalOpen, editingService, project.id]);
 
   const onSubmit = async (values: ServiceFormValues) => {
     try {
@@ -100,6 +163,10 @@ export default function TabServices({ project }: { project: Project }) {
         projectId: project.id,
         ...values
       });
+      localStorage.removeItem(`services_form_draft_${project.id}`);
+      localStorage.removeItem(`services_editing_id_${project.id}`);
+      localStorage.removeItem(`services_modal_open_${project.id}`);
+      lastEditingIdRef.current = undefined;
       toast.success(editingService ? 'Service updated' : 'Service integration added');
       setModalOpen(false);
       setEditingService(null);

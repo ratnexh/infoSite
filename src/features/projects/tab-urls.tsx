@@ -79,21 +79,83 @@ export default function TabUrls({ project }: { project: Project }) {
 
   const watchedUrl = watch('url');
 
+  // Load modal open state from localStorage
   React.useEffect(() => {
-    if (editingUrl) {
-      reset({
-        title: editingUrl.title,
-        url: editingUrl.url,
-        category: editingUrl.category
-      });
-    } else {
-      reset({
-        title: '',
-        url: '',
-        category: 'production'
-      });
+    if (typeof window !== 'undefined') {
+      const open = localStorage.getItem(`urls_modal_open_${project.id}`) === 'true';
+      if (open) setModalOpen(true);
     }
-  }, [editingUrl, reset, modalOpen]);
+  }, [project.id]);
+
+  // Save modal open state to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`urls_modal_open_${project.id}`, modalOpen ? 'true' : 'false');
+    }
+  }, [modalOpen, project.id]);
+
+  // Load editing URL from localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedId = localStorage.getItem(`urls_editing_id_${project.id}`);
+      if (savedId && urls.length > 0) {
+        const found = urls.find(u => u.id === savedId);
+        if (found) setEditingUrl(found);
+      }
+    }
+  }, [urls, project.id]);
+
+  // Save editing URL ID to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (editingUrl) {
+        localStorage.setItem(`urls_editing_id_${project.id}`, editingUrl.id);
+      } else {
+        localStorage.removeItem(`urls_editing_id_${project.id}`);
+      }
+    }
+  }, [editingUrl, project.id]);
+
+  const lastEditingIdRef = React.useRef<string | undefined | null>(undefined);
+
+  React.useEffect(() => {
+    if (modalOpen) {
+      const currentEditingId = editingUrl?.id || null;
+      if (lastEditingIdRef.current !== currentEditingId) {
+        lastEditingIdRef.current = currentEditingId;
+        
+        let initialData: UrlFormValues = {
+          title: '',
+          url: '',
+          category: 'production'
+        };
+
+        if (!currentEditingId) {
+          const saved = localStorage.getItem(`urls_form_draft_${project.id}`);
+          if (saved) {
+            try {
+              initialData = { ...initialData, ...JSON.parse(saved) };
+            } catch {}
+          }
+        } else {
+          initialData = {
+            title: editingUrl?.title || '',
+            url: editingUrl?.url || '',
+            category: editingUrl?.category || 'production'
+          };
+        }
+        reset(initialData);
+      }
+    }
+  }, [modalOpen, editingUrl, reset, project.id]);
+
+  // Persist form changes in real-time
+  const formValues = watch();
+  React.useEffect(() => {
+    if (modalOpen && !editingUrl && typeof window !== 'undefined') {
+      localStorage.setItem(`urls_form_draft_${project.id}`, JSON.stringify(formValues));
+    }
+  }, [formValues, modalOpen, editingUrl, project.id]);
 
   // Auto-detect title and category from URL
   React.useEffect(() => {
@@ -125,6 +187,10 @@ export default function TabUrls({ project }: { project: Project }) {
         projectId: project.id,
         ...values
       });
+      localStorage.removeItem(`urls_form_draft_${project.id}`);
+      localStorage.removeItem(`urls_editing_id_${project.id}`);
+      localStorage.removeItem(`urls_modal_open_${project.id}`);
+      lastEditingIdRef.current = undefined;
       toast.success(editingUrl ? 'URL updated' : 'URL added');
       setModalOpen(false);
       setEditingUrl(null);
