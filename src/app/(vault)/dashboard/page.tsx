@@ -653,7 +653,7 @@ export default function DashboardPage() {
                 </button>
               ) : (
                 <button
-                  onClick={() => setDialogOpen(true)}
+                  onClick={() => setProjectDialogOpen(true)}
                   className="mt-2 bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-750 font-semibold py-1.5 px-3.5 rounded-lg text-xs transition cursor-pointer"
                 >
                   Create Project
@@ -673,7 +673,7 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-2">
               {/* Primary */}
               <button 
-                onClick={() => setDialogOpen(true)}
+                onClick={() => setProjectDialogOpen(true)}
                 className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer shadow-md"
               >
                 <Plus className="w-4 h-4" />

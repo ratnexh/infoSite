@@ -36,7 +36,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 
 interface ProjectListViewProps {
   presetFilter: 'active' | 'favorites' | 'archived' | 'deleted';
@@ -980,7 +980,7 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
             </p>
             {presetFilter === 'active' && !searchTerm && (
               <button
-                onClick={() => setDialogOpen(true)}
+                onClick={() => setProjectDialogOpen(true)}
                 className="mt-5 bg-zinc-950 border border-zinc-850 hover:bg-zinc-900 text-zinc-300 font-bold py-2 px-4 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer transition shadow-md"
               >
                 <Plus className="w-3.5 h-3.5 text-emerald-400" />
