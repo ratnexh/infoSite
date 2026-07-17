@@ -247,8 +247,8 @@ const maps = {
 };
 
 export const SyncEngine = {
-  // Push changes to Supabase (Upsert)
-  async push(dexieTable: keyof typeof maps, record: any) {
+  // Push changes to Supabase (Upsert) with retry mechanism for foreign key violations
+  async push(dexieTable: keyof typeof maps, record: any, retryCount = 0): Promise<void> {
     if (!canSync()) return;
     const userId = useSyncStore.getState().userId!;
     const mapper = maps[dexieTable];
@@ -263,7 +263,18 @@ export const SyncEngine = {
         .from(supabaseTable) as any)
         .upsert(payload);
 
-      if (error) throw error;
+      if (error) {
+        // If it is a foreign key violation (Postgres error code 23503) and we have retries left
+        const isFkViolation = error.code === '23503' || 
+          (error.message && error.message.includes('foreign key constraint'));
+          
+        if (isFkViolation && retryCount < 3) {
+          console.warn(`Sync warning [${dexieTable}]: Foreign key violation. Retrying in 1s... (Attempt ${retryCount + 1}/3)`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return this.push(dexieTable, record, retryCount + 1);
+        }
+        throw error;
+      }
     } catch (e: any) {
       console.error(`Sync push error [${dexieTable}]:`, e.message || e, e.details || '', e.hint || '');
       useSyncStore.getState().setSyncError(`Failed to sync changes: ${e.message || 'Unknown error'}`);

@@ -26,6 +26,7 @@ import {
 import { formatDate } from '@/lib/utils';
 import ProjectDialog from '@/components/project-dialog';
 import { toast } from 'sonner';
+import { ProjectRepository } from '@/lib/storage/repositories';
 
 interface TabOverviewProps {
   project: Project;
@@ -36,7 +37,8 @@ export default function TabOverview({ project, onRefresh }: TabOverviewProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [showPass2, setShowPass2] = React.useState(false);
   const [showPass3, setShowPass3] = React.useState(false);
-  const { currentRole } = useSettingsStore();
+  const { currentRole, encryptionKey } = useSettingsStore();
+  const colorInputRef = React.useRef<HTMLInputElement>(null);
 
   // Live query related stats
   const urlCount = useLiveQuery(() => db.urls.where('projectId').equals(project.id).count()) || 0;
@@ -200,10 +202,41 @@ export default function TabOverview({ project, onRefresh }: TabOverviewProps) {
             </div>
           </div>
 
-          <div className="border-t border-zinc-200 dark:border-zinc-900 pt-3.5 flex items-center gap-2 text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-            <span>Color Index:</span>
-            <span className="w-3.5 h-3.5 rounded-full border border-white/10" style={{ backgroundColor: project.color }} />
-            <span className="font-mono">{project.color}</span>
+          <div className="border-t border-zinc-200 dark:border-zinc-900 pt-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+              <span>Color Index:</span>
+              <span 
+                className="w-3.5 h-3.5 rounded-full border border-zinc-350 dark:border-white/10 cursor-pointer hover:scale-105 transition-transform" 
+                style={{ backgroundColor: project.color }} 
+                onClick={() => colorInputRef.current?.click()}
+                title="Choose color"
+              />
+              <span className="font-mono text-zinc-700 dark:text-zinc-300">{project.color}</span>
+            </div>
+
+            <input 
+              type="color" 
+              ref={colorInputRef}
+              value={project.color || '#10b981'}
+              onChange={async (e) => {
+                const newColor = e.target.value;
+                try {
+                  await ProjectRepository.update(project.id, { color: newColor }, encryptionKey);
+                  onRefresh();
+                  toast.success('Project color updated successfully!');
+                } catch {
+                  toast.error('Failed to update color');
+                }
+              }}
+              className="hidden"
+            />
+
+            <button
+              onClick={() => colorInputRef.current?.click()}
+              className="text-[10px] font-bold text-emerald-500 hover:text-emerald-400 cursor-pointer transition uppercase"
+            >
+              Edit
+            </button>
           </div>
         </div>
       </div>
