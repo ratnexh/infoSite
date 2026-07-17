@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { detectUrlLabel } from '@/lib/url-detect';
+import { useConfirmStore } from '@/store/confirm-store';
 
 const urlSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
@@ -51,6 +52,7 @@ const CATEGORY_LABELS: Record<UrlCategory, string> = {
 
 export default function TabUrls({ project }: { project: Project }) {
   const { currentRole } = useSettingsStore();
+  const { showConfirm } = useConfirmStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUrl, setEditingUrl] = useState<ProjectUrl | null>(null);
 
@@ -200,14 +202,20 @@ export default function TabUrls({ project }: { project: Project }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this URL?')) {
-      try {
-        await UrlRepository.delete(id, project.id);
-        toast.success('URL deleted');
-      } catch {
-        toast.error('Failed to delete URL');
+    showConfirm({
+      title: 'Delete URL',
+      message: 'Are you sure you want to delete this URL? This action is permanent.',
+      confirmLabel: 'Delete',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await UrlRepository.delete(id, project.id);
+          toast.success('URL deleted');
+        } catch {
+          toast.error('Failed to delete URL');
+        }
       }
-    }
+    });
   };
 
   // Drag handlers

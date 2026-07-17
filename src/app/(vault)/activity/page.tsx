@@ -31,9 +31,11 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useConfirmStore } from '@/store/confirm-store';
 
 export default function ActivityPage() {
   const { userEmail } = useSyncStore();
+  const { showConfirm } = useConfirmStore();
 
   // Filter & Search states
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,14 +80,20 @@ export default function ActivityPage() {
   };
 
   const handleClear = async () => {
-    if (confirm('Are you absolutely sure you want to delete all audit logs? This action is permanent and cannot be undone.')) {
-      try {
-        await db.activities.clear();
-        toast.success('Audit log history permanently cleared');
-      } catch {
-        toast.error('Failed to clear activity logs');
+    showConfirm({
+      title: 'Clear Audit Logs',
+      message: 'Are you absolutely sure you want to delete all audit logs? This action is permanent and cannot be undone.',
+      confirmLabel: 'Clear All',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await db.activities.clear();
+          toast.success('Audit log history permanently cleared');
+        } catch {
+          toast.error('Failed to clear activity logs');
+        }
       }
-    }
+    });
   };
 
   // Full export of audit log logs
@@ -363,14 +371,14 @@ export default function ActivityPage() {
   return (
     <div className="space-y-6">
       
-      {/* Sticky Header Banner */}
-      <div className="sticky top-0 z-30 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900 pb-5 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Banner */}
+      <div className="border-b border-zinc-200 dark:border-zinc-900 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-50 flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
             <History className="w-5 h-5 text-emerald-500" />
             Audit Logs & Activity
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
             Track and monitor all operations performed on your local vault.
           </p>
         </div>
@@ -378,7 +386,7 @@ export default function ActivityPage() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleExportLogs}
-            className="bg-zinc-950 border border-zinc-850 hover:bg-zinc-900 text-zinc-350 font-bold py-2 px-3.5 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer transition"
+            className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-850 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-350 font-bold py-2 px-3.5 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer transition"
             title="Download full JSON history"
           >
             <Download className="w-3.5 h-3.5" />
@@ -388,7 +396,7 @@ export default function ActivityPage() {
           <button
             onClick={handleClear}
             disabled={rawActivities.length === 0}
-            className="bg-zinc-950 border border-zinc-850 hover:bg-red-950/20 hover:text-red-400 hover:border-red-900/40 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-450 font-bold py-2 px-3.5 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer transition"
+            className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-850 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-650 dark:hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-500 dark:text-zinc-450 font-bold py-2 px-3.5 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer transition"
             title="Clear IndexedDB logs"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -396,6 +404,7 @@ export default function ActivityPage() {
           </button>
         </div>
       </div>
+
 
       {/* Statistics aggregates row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

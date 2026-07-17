@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useConfirmStore } from '@/store/confirm-store';
 
 const serviceSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -49,6 +50,7 @@ const PRESET_SERVICES = [
 
 export default function TabServices({ project }: { project: Project }) {
   const { currentRole } = useSettingsStore();
+  const { showConfirm } = useConfirmStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
 
@@ -176,14 +178,20 @@ export default function TabServices({ project }: { project: Project }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Remove this service integration?')) {
-      try {
-        await ServiceRepository.delete(id, project.id);
-        toast.success('Service deleted');
-      } catch {
-        toast.error('Failed to delete service');
+    showConfirm({
+      title: 'Remove Service Integration',
+      message: 'Are you sure you want to remove this service integration? This action is permanent.',
+      confirmLabel: 'Remove',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await ServiceRepository.delete(id, project.id);
+          toast.success('Service deleted');
+        } catch {
+          toast.error('Failed to delete service');
+        }
       }
-    }
+    });
   };
 
   // Drag Handlers

@@ -7,6 +7,7 @@ import CommandPalette from "@/components/command-palette";
 import PWARegister from "@/components/pwa-register";
 import SyncInitializer from "@/components/sync-initializer";
 import { Toaster } from "sonner";
+import ConfirmDialog from "@/components/confirm-dialog";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,6 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          forcedTheme="dark"
           disableTransitionOnChange
         >
           <SyncInitializer />
@@ -42,6 +42,7 @@ export default function RootLayout({
             {children}
             <CommandPalette />
             <PWARegister />
+            <ConfirmDialog />
           </AutoLock>
           <Toaster 
             position="bottom-right" 

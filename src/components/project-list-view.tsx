@@ -37,6 +37,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { cn, formatDate } from '@/lib/utils';
+import { useConfirmStore } from '@/store/confirm-store';
 
 interface ProjectListViewProps {
   presetFilter: 'active' | 'favorites' | 'archived' | 'deleted';
@@ -66,6 +67,7 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
   } = useUIStore();
 
   const { currentRole } = useSettingsStore();
+  const { showConfirm } = useConfirmStore();
 
   // Local Filters
   const [localStatusFilter, setLocalStatusFilter] = useState<string>('all');
@@ -249,16 +251,22 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
   };
 
   const executeBulkDelete = async () => {
-    if (confirm(`Move ${selectedIds.size} projects to Trash?`)) {
-      try {
-        const ids = Array.from(selectedIds);
-        await Promise.all(ids.map(id => ProjectRepository.softDelete(id)));
-        toast.success('Projects moved to Trash');
-        setSelectedIds(new Set());
-      } catch {
-        toast.error('Bulk deletion failed');
+    showConfirm({
+      title: 'Move Projects to Trash',
+      message: `Are you sure you want to move the selected ${selectedIds.size} projects to Trash?`,
+      confirmLabel: 'Move to Trash',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          const ids = Array.from(selectedIds);
+          await Promise.all(ids.map(id => ProjectRepository.softDelete(id)));
+          toast.success('Projects moved to Trash');
+          setSelectedIds(new Set());
+        } catch {
+          toast.error('Bulk deletion failed');
+        }
       }
-    }
+    });
   };
 
   const executeBulkExport = async () => {
@@ -325,14 +333,20 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
   const handleHardDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm('Are you absolutely sure? This will permanently delete this project.')) {
-      try {
-        await ProjectRepository.hardDelete(id);
-        toast.success('Project permanently deleted');
-      } catch {
-        toast.error('Failed to delete project');
+    showConfirm({
+      title: 'Delete Project Permanently',
+      message: 'Are you absolutely sure? This will permanently delete this project. This action cannot be undone.',
+      confirmLabel: 'Delete Permanently',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await ProjectRepository.hardDelete(id);
+          toast.success('Project permanently deleted');
+        } catch {
+          toast.error('Failed to delete project');
+        }
       }
-    }
+    });
   };
 
   const handleArchive = async (e: React.MouseEvent, id: string, name: string, isArchived: boolean) => {
@@ -386,11 +400,11 @@ export default function ProjectListView({ presetFilter, title, description }: Pr
   return (
     <div className="space-y-6">
       
-      {/* Sticky Page Header */}
-      <div className="sticky top-0 z-30 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900 pb-5 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Page Header */}
+      <div className="border-b border-zinc-200 dark:border-zinc-900 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-55">{title}</h1>
-          <p className="text-xs text-zinc-400 mt-1">{description}</p>
+          <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{title}</h1>
+          <p className="text-xs text-zinc-550 dark:text-zinc-400 mt-1">{description}</p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">

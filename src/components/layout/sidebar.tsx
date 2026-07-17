@@ -8,6 +8,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db/dexie-db';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { useConfirmStore } from '@/store/confirm-store';
 import { 
   LayoutDashboard, 
   Folder, 
@@ -25,17 +26,24 @@ import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
   const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { showConfirm } = useConfirmStore();
   const pathname = usePathname();
 
   const handleSignOut = async () => {
-    if (confirm('Are you sure you want to sign out? This will disconnect cloud sync and clear all local vault cache.')) {
-      try {
-        await supabase.auth.signOut();
-        toast.success('Successfully logged out');
-      } catch (err: any) {
-        toast.error(err.message || 'Logout failed');
+    showConfirm({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out? This will disconnect cloud sync and clear all local vault cache.',
+      confirmLabel: 'Sign Out',
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          await supabase.auth.signOut();
+          toast.success('Successfully logged out');
+        } catch (err: any) {
+          toast.error(err.message || 'Logout failed');
+        }
       }
-    }
+    });
   };
 
   // Reactive project counts

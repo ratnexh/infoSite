@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import SupabaseSettings from './supabase-settings';
 import { cn } from '@/lib/utils';
+import { useConfirmStore } from '@/store/confirm-store';
 
 export default function SettingsPage() {
   const { 
@@ -45,6 +46,7 @@ export default function SettingsPage() {
   } = useSettingsStore();
 
   const { isAuthenticated, userEmail, lastSyncedAt } = useSyncStore();
+  const { showConfirm } = useConfirmStore();
 
   // 1. Password state
   const [oldPassword, setOldPassword] = useState('');
@@ -191,20 +193,26 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (confirm('Importing backup will wipe your current local database and overwrite it. Are you sure?')) {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const contents = event.target?.result as string;
-          await ImportExportService.importJSON(contents);
-          toast.success("Backup successfully restored! Refreshing...");
-          setTimeout(() => window.location.reload(), 1000);
-        } catch (err: any) {
-          toast.error(err.message || "Failed to import JSON file");
-        }
-      };
-      reader.readAsText(file);
-    }
+    showConfirm({
+      title: 'Import Backup JSON',
+      message: 'Importing backup will wipe your current local database and overwrite it. Are you sure?',
+      confirmLabel: 'Wipe & Import',
+      variant: 'info',
+      onConfirm: async () => {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const contents = event.target?.result as string;
+            await ImportExportService.importJSON(contents);
+            toast.success("Backup successfully restored! Refreshing...");
+            setTimeout(() => window.location.reload(), 1000);
+          } catch (err: any) {
+            toast.error(err.message || "Failed to import JSON file");
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
     e.target.value = '';
   };
 
@@ -826,10 +834,16 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => {
-                if (confirm('Disconnect cloud vault? Your local cached tables will be wiped.')) {
-                  supabase.auth.signOut();
-                  toast.success('Disconnected Cloud Account');
-                }
+                showConfirm({
+                  title: 'Disconnect Cloud Vault',
+                  message: 'Disconnect cloud vault? Your local cached tables will be wiped.',
+                  confirmLabel: 'Disconnect',
+                  variant: 'warning',
+                  onConfirm: () => {
+                    supabase.auth.signOut();
+                    toast.success('Disconnected Cloud Account');
+                  }
+                });
               }}
               disabled={!isAuthenticated}
               className="w-full bg-zinc-950 border border-zinc-850 hover:bg-red-950/30 hover:border-red-900/40 hover:text-red-400 disabled:bg-zinc-900/40 disabled:text-zinc-600 disabled:border-zinc-900 text-zinc-450 font-bold py-2 rounded-lg text-[10px] transition cursor-pointer"
@@ -846,12 +860,18 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => {
-                if (confirm('Disable Two-Factor Authentication? This reduces your vault security status.')) {
-                  setIs2FAEnabled(false);
-                  setIs2FAVerified(false);
-                  setShow2FAPanel(false);
-                  toast.info('Two-Factor Authentication disabled');
-                }
+                showConfirm({
+                  title: 'Disable 2FA App',
+                  message: 'Disable Two-Factor Authentication? This reduces your vault security status.',
+                  confirmLabel: 'Disable 2FA',
+                  variant: 'warning',
+                  onConfirm: () => {
+                    setIs2FAEnabled(false);
+                    setIs2FAVerified(false);
+                    setShow2FAPanel(false);
+                    toast.info('Two-Factor Authentication disabled');
+                  }
+                });
               }}
               disabled={!is2FAEnabled}
               className="w-full bg-zinc-950 border border-zinc-850 hover:bg-red-950/30 hover:border-red-900/40 hover:text-red-400 disabled:bg-zinc-900/40 disabled:text-zinc-600 disabled:border-zinc-900 text-zinc-450 font-bold py-2 rounded-lg text-[10px] transition cursor-pointer"

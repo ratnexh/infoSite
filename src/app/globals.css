@@ -1,15 +1,27 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 /* =============================================
-   DESIGN SYSTEM TOKENS — Dark mode only
+   DESIGN SYSTEM TOKENS
    ============================================= */
 :root {
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --border: #E2E8F0;
+  --text: #0F172A;
+  --muted: #64748B;
+  --primary: #10b981;
+  --focus-ring: rgba(16, 185, 129, 0.25);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+}
+
+.dark {
   --background: #0F1115;
   --surface: #171A21;
   --border: #222833;
   --text: #f1f5f9;
   --muted: #94a3b8;
-  --primary: #10b981;
   --focus-ring: rgba(16, 185, 129, 0.35);
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
@@ -106,4 +118,103 @@ body {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* =============================================
+   LIGHT MODE OVERRIDES (PREVENTS ACCIDENTALLY INVISIBLE STYLES)
+   ============================================= */
+:root:not(.dark) {
+  /* Layout backgrounds */
+  .bg-zinc-950,
+  .bg-zinc-900,
+  .bg-zinc-850,
+  .bg-zinc-800 {
+    background-color: #ffffff !important;
+  }
+  
+  .bg-zinc-100 {
+    background-color: #f1f5f9 !important;
+  }
+  
+  /* Comprehensive translucent backgrounds */
+  .bg-zinc-950\/5, .bg-zinc-950\/10, .bg-zinc-950\/20, .bg-zinc-950\/30, .bg-zinc-950\/40, .bg-zinc-950\/50, .bg-zinc-950\/60, .bg-zinc-950\/70, .bg-zinc-950\/80, .bg-zinc-950\/90,
+  .bg-zinc-900\/5, .bg-zinc-900\/10, .bg-zinc-900\/20, .bg-zinc-900\/30, .bg-zinc-900\/40, .bg-zinc-900\/50, .bg-zinc-900\/60, .bg-zinc-900\/70, .bg-zinc-900\/80, .bg-zinc-900\/90,
+  .bg-zinc-850\/5, .bg-zinc-850\/10, .bg-zinc-850\/20, .bg-zinc-850\/30, .bg-zinc-850\/40, .bg-zinc-850\/50, .bg-zinc-850\/60, .bg-zinc-850\/70, .bg-zinc-850\/80, .bg-zinc-850\/90,
+  .bg-zinc-800\/5, .bg-zinc-800\/10, .bg-zinc-800\/20, .bg-zinc-800\/30, .bg-zinc-800\/40, .bg-zinc-800\/50, .bg-zinc-800\/60, .bg-zinc-800\/70, .bg-zinc-800\/80, .bg-zinc-800\/90 {
+    background-color: #f1f5f9 !important;
+  }
+  
+  /* Borders */
+  .border-zinc-950,
+  .border-zinc-900,
+  .border-zinc-850,
+  .border-zinc-800,
+  .border-zinc-750,
+  .border-zinc-700,
+  .border-zinc-200,
+  .border-zinc-950\/5, .border-zinc-950\/10, .border-zinc-950\/20, .border-zinc-950\/30, .border-zinc-950\/40, .border-zinc-950\/50, .border-zinc-950\/60, .border-zinc-950\/70, .border-zinc-950\/80, .border-zinc-950\/90,
+  .border-zinc-900\/5, .border-zinc-900\/10, .border-zinc-900\/20, .border-zinc-900\/30, .border-zinc-900\/40, .border-zinc-900\/50, .border-zinc-900\/60, .border-zinc-900\/70, .border-zinc-900\/80, .border-zinc-900\/90,
+  .border-zinc-850\/5, .border-zinc-850\/10, .border-zinc-850\/20, .border-zinc-850\/30, .border-zinc-850\/40, .border-zinc-850\/50, .border-zinc-850\/60, .border-zinc-850\/70, .border-zinc-850\/80, .border-zinc-850\/90,
+  .border-zinc-800\/5, .border-zinc-800\/10, .border-zinc-800\/20, .border-zinc-800\/30, .border-zinc-800\/40, .border-zinc-800\/50, .border-zinc-800\/60, .border-zinc-800\/70, .border-zinc-800\/80, .border-zinc-800\/90 {
+    border-color: #cbd5e1 !important;
+  }
+  
+  .border-zinc-900\/60 {
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Text colors */
+  .text-zinc-50,
+  .text-zinc-100,
+  .text-zinc-200,
+  .text-zinc-300 {
+    color: #0f172a !important;
+  }
+  
+  .text-zinc-400,
+  .text-zinc-450,
+  .text-zinc-500,
+  .text-zinc-550,
+  .text-zinc-600 {
+    color: #475569 !important;
+  }
+
+  /* Specific input background overrides */
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  select,
+  textarea {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+
+  /* Command Palette and Modals Glassmorphism */
+  .bg-zinc-900\/50,
+  .bg-zinc-950\/50,
+  .bg-zinc-900\/60,
+  .shadow-2xl.bg-zinc-900,
+  .shadow-2xl.bg-zinc-950,
+  .shadow-2xl.bg-zinc-900\/60,
+  .shadow-2xl.bg-zinc-950\/50 {
+    background-color: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(24px) !important;
+  }
+
+  /* Webkit Scrollbars in light mode */
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8 !important;
+  }
+
+  /* Skeleton loaders contrast in light mode */
+  .animate-pulse .bg-zinc-950,
+  .animate-pulse .bg-zinc-900,
+  .animate-pulse .bg-zinc-850,
+  .animate-pulse .bg-zinc-800 {
+    background-color: #cbd5e1 !important; /* higher contrast loader elements */
+  }
 }

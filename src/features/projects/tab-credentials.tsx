@@ -6,6 +6,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db/dexie-db';
 import { CredentialRepository, ActivityRepository } from '@/lib/storage/repositories';
 import { useSettingsStore } from '@/store/settings-store';
+import { useConfirmStore } from '@/store/confirm-store';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -60,6 +61,7 @@ function generateSecurePassword(length = 16): string {
 
 export default function TabCredentials({ project }: { project: Project }) {
   const { encryptionKey, currentRole } = useSettingsStore();
+  const { showConfirm } = useConfirmStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCred, setEditingCred] = useState<Credential | null>(null);
 
@@ -240,14 +242,20 @@ export default function TabCredentials({ project }: { project: Project }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete these credentials permanently?')) {
-      try {
-        await CredentialRepository.delete(id, project.id);
-        toast.success('Credentials deleted');
-      } catch {
-        toast.error('Failed to delete credentials');
+    showConfirm({
+      title: 'Delete Credentials',
+      message: 'Are you sure you want to delete these credentials permanently? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await CredentialRepository.delete(id, project.id);
+          toast.success('Credentials deleted');
+        } catch {
+          toast.error('Failed to delete credentials');
+        }
       }
-    }
+    });
   };
 
   // Drag logic handlers

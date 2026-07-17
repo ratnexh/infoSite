@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useConfirmStore } from '@/store/confirm-store';
 
 const contactSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -45,6 +46,7 @@ const ROLE_LABELS: Record<ContactRole, string> = {
 
 export default function TabContacts({ project }: { project: Project }) {
   const { currentRole } = useSettingsStore();
+  const { showConfirm } = useConfirmStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
 
@@ -180,14 +182,20 @@ export default function TabContacts({ project }: { project: Project }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this contact stakeholder?')) {
-      try {
-        await ContactRepository.delete(id, project.id);
-        toast.success('Contact deleted');
-      } catch {
-        toast.error('Failed to delete contact');
+    showConfirm({
+      title: 'Delete Contact Stakeholder',
+      message: 'Are you sure you want to delete this contact stakeholder? This action is permanent.',
+      confirmLabel: 'Delete',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await ContactRepository.delete(id, project.id);
+          toast.success('Contact deleted');
+        } catch {
+          toast.error('Failed to delete contact');
+        }
       }
-    }
+    });
   };
 
   // Drag Handlers

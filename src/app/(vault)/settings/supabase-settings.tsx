@@ -7,6 +7,7 @@ import { SyncEngine } from '@/lib/supabase/sync-engine';
 import { Cloud, CloudOff, RefreshCw, LogOut, CheckCircle, AlertTriangle, Loader2, Database, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useConfirmStore } from '@/store/confirm-store';
 
 export default function SupabaseSettings() {
   const { 
@@ -16,16 +17,23 @@ export default function SupabaseSettings() {
     syncError, 
     isOnline 
   } = useSyncStore();
+  const { showConfirm } = useConfirmStore();
 
   const handleLogout = async () => {
-    if (confirm('Are you sure you want to disconnect your cloud account? This will stop syncing and clear all local cache for security.')) {
-      try {
-        await supabase.auth.signOut();
-        toast.success('Signed out of cloud vault');
-      } catch (err: any) {
-        toast.error(err.message || 'Logout failed');
+    showConfirm({
+      title: 'Disconnect Cloud Vault',
+      message: 'Are you sure you want to disconnect your cloud account? This will stop syncing and clear all local cache for security.',
+      confirmLabel: 'Disconnect',
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          await supabase.auth.signOut();
+          toast.success('Signed out of cloud vault');
+        } catch (err: any) {
+          toast.error(err.message || 'Logout failed');
+        }
       }
-    }
+    });
   };
 
   const handleManualSync = async () => {

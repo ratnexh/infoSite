@@ -16,6 +16,7 @@ import {
 import { motion } from 'framer-motion';
 import { Lock, Eye, EyeOff, Shield, ShieldCheck, KeyRound, Loader2, ArrowRight, Mail, AlertCircle, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { useConfirmStore } from '@/store/confirm-store';
 
 export default function AutoLock({ children }: { children: React.ReactNode }) {
   const {
@@ -30,6 +31,7 @@ export default function AutoLock({ children }: { children: React.ReactNode }) {
   } = useSettingsStore();
 
   const { isAuthenticated, userEmail } = useSyncStore();
+  const { showConfirm } = useConfirmStore();
 
   // Form states
   const [isSignUp, setIsSignUp] = useState(false);
@@ -248,14 +250,20 @@ export default function AutoLock({ children }: { children: React.ReactNode }) {
   };
 
   const handleSignOut = async () => {
-    if (confirm('Are you sure you want to sign out? This will clear all local vault cache.')) {
-      try {
-        await supabase.auth.signOut();
-        toast.success('Successfully logged out');
-      } catch (err: any) {
-        toast.error(err.message || 'Logout failed');
+    showConfirm({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out? This will clear all local vault cache.',
+      confirmLabel: 'Sign Out',
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          await supabase.auth.signOut();
+          toast.success('Successfully logged out');
+        } catch (err: any) {
+          toast.error(err.message || 'Logout failed');
+        }
       }
-    }
+    });
   };
 
   // 1. Sleek loading screen during startup checks

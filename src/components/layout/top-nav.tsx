@@ -12,11 +12,15 @@ import {
   ChevronDown,
   Cloud,
   CloudOff,
-  RefreshCw
+  RefreshCw,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSyncStore } from '@/store/sync-store';
 import { db } from '@/lib/db/dexie-db';
+import { useTheme } from 'next-themes';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function TopNav() {
   const {
@@ -28,6 +32,12 @@ export default function TopNav() {
 
   const { lockVault } = useSettingsStore();
   const { isAuthenticated, isSyncing, isOnline } = useSyncStore();
+  const { theme, setTheme } = useTheme();
+
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLock = () => {
     lockVault();
@@ -160,6 +170,39 @@ export default function TopNav() {
             </span>
           )}
         </div>
+
+        {/* Theme Toggle */}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 border border-zinc-200 dark:border-zinc-800 p-2 rounded-lg transition cursor-pointer shrink-0 flex items-center justify-center overflow-hidden relative group w-9 h-9"
+          title="Toggle Theme Mode"
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            {mounted && theme === 'dark' ? (
+              <motion.div
+                key="sun"
+                initial={{ y: 15, rotate: 45, opacity: 0 }}
+                animate={{ y: 0, rotate: 0, opacity: 1 }}
+                exit={{ y: -15, rotate: -45, opacity: 0 }}
+                transition={{ duration: 0.18, ease: "easeInOut" }}
+                className="flex items-center justify-center shrink-0"
+              >
+                <Sun className="w-4 h-4 text-amber-500 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-12" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="moon"
+                initial={{ y: 15, rotate: 45, opacity: 0 }}
+                animate={{ y: 0, rotate: 0, opacity: 1 }}
+                exit={{ y: -15, rotate: -45, opacity: 0 }}
+                transition={{ duration: 0.18, ease: "easeInOut" }}
+                className="flex items-center justify-center shrink-0"
+              >
+                <Moon className="w-4 h-4 text-indigo-400 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-12" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </button>
 
         {/* Lock Vault */}
         <button

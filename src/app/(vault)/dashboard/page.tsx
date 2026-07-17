@@ -36,6 +36,7 @@ import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useConfirmStore } from '@/store/confirm-store';
 
 export default function DashboardPage() {
   const [envFilter, setEnvFilter] = useState<'all' | 'staging' | 'production'>('all');
@@ -55,6 +56,7 @@ export default function DashboardPage() {
   } = useUIStore();
   
   const { lockVault } = useSettingsStore();
+  const { showConfirm } = useConfirmStore();
 
   // 1. Live queries for stats & data
   const projects = useLiveQuery(() => db.projects.toArray()) || [];
@@ -197,24 +199,30 @@ export default function DashboardPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (confirm('Importing backup will wipe your current database and overwrite it. Are you sure?')) {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const contents = event.target?.result as string;
-          const backupData = JSON.parse(contents);
-          if (!backupData.data) throw new Error('Invalid backup file structure.');
-          
-          const { ImportExportService } = await import('@/lib/storage/import-export');
-          await ImportExportService.importJSON(contents);
-          toast.success("Database backup restored successfully!");
-          setTimeout(() => window.location.reload(), 1000);
-        } catch (err: any) {
-          toast.error(err.message || "Failed to restore JSON file");
-        }
-      };
-      reader.readAsText(file);
-    }
+    showConfirm({
+      title: 'Import Backup JSON',
+      message: 'Importing backup will wipe your current database and overwrite it. Are you sure?',
+      confirmLabel: 'Wipe & Import',
+      variant: 'info',
+      onConfirm: async () => {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const contents = event.target?.result as string;
+            const backupData = JSON.parse(contents);
+            if (!backupData.data) throw new Error('Invalid backup file structure.');
+            
+            const { ImportExportService } = await import('@/lib/storage/import-export');
+            await ImportExportService.importJSON(contents);
+            toast.success("Database backup restored successfully!");
+            setTimeout(() => window.location.reload(), 1000);
+          } catch (err: any) {
+            toast.error(err.message || "Failed to restore JSON file");
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
     e.target.value = '';
   };
 

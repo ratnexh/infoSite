@@ -19,8 +19,10 @@ import {
 import { formatBytes, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useConfirmStore } from '@/store/confirm-store';
 
 export default function TabFiles({ project }: { project: Project }) {
+  const { showConfirm } = useConfirmStore();
   const [isUploading, setIsUploading] = useState(false);
 
   // Live Query files (excludes binary data to load list quickly)
@@ -102,14 +104,20 @@ export default function TabFiles({ project }: { project: Project }) {
   };
 
   const handleDelete = async (fileId: string) => {
-    if (confirm('Delete this file permanently?')) {
-      try {
-        await AttachmentRepository.delete(fileId, project.id);
-        toast.success('File deleted successfully');
-      } catch {
-        toast.error('Failed to delete file');
+    showConfirm({
+      title: 'Delete File Permanently',
+      message: 'Are you sure you want to delete this file permanently? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await AttachmentRepository.delete(fileId, project.id);
+          toast.success('File deleted successfully');
+        } catch {
+          toast.error('Failed to delete file');
+        }
       }
-    }
+    });
   };
 
   const getFileIcon = (mime: string) => {
