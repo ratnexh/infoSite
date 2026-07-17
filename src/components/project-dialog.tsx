@@ -113,10 +113,10 @@ export default function ProjectDialog({ isOpen, onClose, onSuccess, editingProje
       if (lastEditingIdRef.current !== currentEditingId) {
         lastEditingIdRef.current = currentEditingId;
         
-        let initialData = {
+        let initialData: ProjectFormValues = {
           name: '',
           aka: '',
-          status: 'development' as const,
+          status: 'development',
           color: '#10b981',
           docsUrls: [] as string[],
           figmaUrls: [] as string[],
