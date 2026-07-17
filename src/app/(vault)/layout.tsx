@@ -9,6 +9,23 @@ import { useUIStore } from '@/store/ui-store';
 export default function VaultLayout({ children }: { children: React.ReactNode }) {
   const { projectDialogOpen, setProjectDialogOpen } = useUIStore();
 
+  // Read initial dialog open state from localStorage on mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('project_dialog_open') === 'true';
+      if (saved) {
+        setProjectDialogOpen(true);
+      }
+    }
+  }, [setProjectDialogOpen]);
+
+  // Save dialog open state to localStorage on changes
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('project_dialog_open', projectDialogOpen ? 'true' : 'false');
+    }
+  }, [projectDialogOpen]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
       {/* Sidebar Navigation */}

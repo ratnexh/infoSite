@@ -112,22 +112,54 @@ export default function ProjectDialog({ isOpen, onClose, onSuccess, editingProje
       const currentEditingId = editingProject?.id || null;
       if (lastEditingIdRef.current !== currentEditingId) {
         lastEditingIdRef.current = currentEditingId;
-        reset({
-          name: editingProject?.name || '',
-          aka: editingProject?.aka || '',
-          status: editingProject?.status || 'development',
-          color: editingProject?.color || '#10b981',
-          docsUrls: editingProject?.docsUrls || [],
-          figmaUrls: editingProject?.figmaUrls || [],
-          url2: editingProject?.url2 || '',
-          dashboardUrl2: editingProject?.dashboardUrl2 || '',
-          cred2Username: editingProject?.cred2Username || '',
-          cred2Password: editingProject?.cred2Password || '',
-          url3: editingProject?.url3 || '',
-          dashboardUrl3: editingProject?.dashboardUrl3 || '',
-          cred3Username: editingProject?.cred3Username || '',
-          cred3Password: editingProject?.cred3Password || ''
-        });
+        
+        let initialData = {
+          name: '',
+          aka: '',
+          status: 'development' as const,
+          color: '#10b981',
+          docsUrls: [] as string[],
+          figmaUrls: [] as string[],
+          url2: '',
+          dashboardUrl2: '',
+          cred2Username: '',
+          cred2Password: '',
+          url3: '',
+          dashboardUrl3: '',
+          cred3Username: '',
+          cred3Password: ''
+        };
+
+        if (!currentEditingId) {
+          const saved = localStorage.getItem('site_vault_project_draft');
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              initialData = { ...initialData, ...parsed };
+            } catch {
+              // fallback
+            }
+          }
+        } else {
+          initialData = {
+            name: editingProject?.name || '',
+            aka: editingProject?.aka || '',
+            status: editingProject?.status || 'development',
+            color: editingProject?.color || '#10b981',
+            docsUrls: editingProject?.docsUrls || [],
+            figmaUrls: editingProject?.figmaUrls || [],
+            url2: editingProject?.url2 || '',
+            dashboardUrl2: editingProject?.dashboardUrl2 || '',
+            cred2Username: editingProject?.cred2Username || '',
+            cred2Password: editingProject?.cred2Password || '',
+            url3: editingProject?.url3 || '',
+            dashboardUrl3: editingProject?.dashboardUrl3 || '',
+            cred3Username: editingProject?.cred3Username || '',
+            cred3Password: editingProject?.cred3Password || ''
+          };
+        }
+
+        reset(initialData);
         setDocInput('');
         setFigmaInput('');
         setProdExpanded(true);
@@ -135,6 +167,14 @@ export default function ProjectDialog({ isOpen, onClose, onSuccess, editingProje
       }
     }
   }, [isOpen, editingProject, reset]);
+
+  // Persist form changes in real-time
+  const formValues = watch();
+  React.useEffect(() => {
+    if (isOpen && !editingProject && typeof window !== 'undefined') {
+      localStorage.setItem('site_vault_project_draft', JSON.stringify(formValues));
+    }
+  }, [formValues, isOpen, editingProject]);
 
   const handleAddDoc = () => {
     if (!docInput.trim()) return;
@@ -185,6 +225,7 @@ export default function ProjectDialog({ isOpen, onClose, onSuccess, editingProje
         await ProjectRepository.create(projectData, encryptionKey);
         toast.success(`Project "${values.name}" created successfully`);
       }
+      localStorage.removeItem('site_vault_project_draft');
       lastEditingIdRef.current = undefined;
       onSuccess();
       onClose();
